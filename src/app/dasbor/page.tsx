@@ -1,35 +1,44 @@
 "use client";
+
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { getSupabaseBrowserClient } from "@/lib/supabase";
+
 export default function Dasbor() {
   const router = useRouter();
   const supabase = getSupabaseBrowserClient();
   const [profil, setProfil] = useState<{ full_name: string; username: string } | null>(null);
   const [peran, setPeran] = useState("");
   const [memuat, setMemuat] = useState(true);
+
   useEffect(() => {
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { router.push("/masuk"); return; }
       for (let coba = 0; coba < 5; coba++) {
-        const { data } = await supabase.from("profiles").select("full_name, username").eq("id", user.id).maybeSingle();
+        const { data } = await supabase
+          .from("profiles").select("full_name, username").eq("id", user.id).maybeSingle();
         if (data) { setProfil(data); break; }
         await new Promise(r => setTimeout(r, 600));
       }
-      const { data: ur } = await supabase.from("user_roles").select("role_id").eq("user_id", user.id).maybeSingle();
-      setPeran(ur?.role_id || "READER");
+      const { data: ur } = await supabase
+        .from("user_roles").select("role_id").eq("user_id", user.id);
+      const daftar = (ur ?? []).map(r => r.role_id);
+      setPeran(daftar.join(" · ") || "READER");
       setMemuat(false);
     })();
   }, [router, supabase]);
+
   async function keluar() {
     await supabase.auth.signOut();
     router.push("/");
   }
+
   if (memuat) {
     return <main style={{ maxWidth: 640, margin: "0 auto", padding: 40, fontFamily: "Georgia, serif" }}><p>Memuat…</p></main>;
   }
+
   return (
     <main style={{ maxWidth: 640, margin: "0 auto", padding: 40, fontFamily: "Georgia, serif" }}>
       <h1 style={{ fontSize: 30 }}>Dasbor Penulis</h1>
@@ -41,6 +50,11 @@ export default function Dasbor() {
         <Link href="/" style={{ padding: 14, border: "1px solid #C7D2C7", borderRadius: 4, textDecoration: "none", color: "#0D120D" }}>← Beranda</Link>
         <button onClick={keluar} style={{ padding: 14, background: "#0D120D", color: "#fff", border: "none", borderRadius: 4, cursor: "pointer" }}>Keluar</button>
       </div>
+      {(peran.includes("EDITOR") || peran.includes("ADMIN")) && (
+        <p style={{ marginTop: 20 }}>
+          <Link href="/editor" style={{ color: "#0B7A3E" }}>🗂️ Buka Meja Editor →</Link>
+        </p>
+      )}
     </main>
   );
 }
