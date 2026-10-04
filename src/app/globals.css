@@ -1,26 +1,84 @@
-@import "tailwindcss";
-
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* ===== MEDIABACA · DESIGN SYSTEM HMI ===== */
+:root{
+  --paper:#FFFFFF; --paper2:#F3F6F3; --paper3:#E4ECE4;
+  --ink:#0D120D; --ink2:#2C372C; --mut:#6E7C6E;
+  --rule:#DDE4DD; --rule2:#C7D2C7;
+  --acc:#0B7A3E; --acc-dark:#096B36; --ok:#1E7A46;
+  --warn:#8A6A1F; --err:#B3261E; --info:#2F5E8A;
+  --fd:var(--font-fd),Georgia,serif;
+  --fb:var(--font-fb),Georgia,serif;
+  --fm:var(--font-fm),monospace;
 }
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+[data-theme="dark"]{
+  --paper:#070B08; --paper2:#0D130E; --paper3:#162017;
+  --ink:#EDF3ED; --ink2:#B4C2B4; --mut:#79867A;
+  --rule:#2A372C; --rule2:#3E4F40; --acc:#2FB35C;
 }
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--fb);font-size:17px;line-height:1.7;background:var(--paper);color:var(--ink)}
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+/* --- elemen dasar --- */
+a{color:inherit;text-decoration:none}
+h1,h2,h3,h4{font-family:var(--fd);font-weight:600;line-height:1.15;letter-spacing:-.01em}
+.mono{font-family:var(--fm)}
+.kicker{font-family:var(--fm);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);display:flex;align-items:center;gap:10px}
+.kicker .idx{color:var(--acc);font-style:italic}
+.kicker .krule{flex:1;height:1px;background:var(--rule)}
+.meta{font-family:var(--fm);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut)}
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
-}
+/* --- tombol --- */
+.btn{display:inline-flex;align-items:center;gap:8px;font-family:var(--fm);font-size:11px;letter-spacing:.12em;text-transform:uppercase;padding:12px 20px;border:1px solid var(--ink);border-radius:2px;color:var(--ink);background:transparent;cursor:pointer;transition:all .18s}
+.btn:hover{background:var(--paper3)}
+.btn-primary{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.btn-primary:hover{background:var(--acc);border-color:var(--acc);color:#fff}
+.btn-acc{background:var(--acc);border-color:var(--acc);color:#fff}
+.btn-acc:hover{filter:brightness(.92)}
+
+/* --- form --- */
+.field label{display:block;font-family:var(--fm);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);margin-bottom:8px}
+.input{width:100%;padding:12px 14px;border:1px solid var(--rule2);border-radius:2px;font-size:16px;font-family:var(--fb);background:var(--paper);color:var(--ink)}
+.input:focus{border-color:var(--ink);outline:none}
+textarea.input{min-height:110px;resize:vertical;line-height:1.6}
+
+/* --- kartu & daftar karya --- */
+.work-list{list-style:none;padding:0}
+.work-item{border-top:1px solid var(--rule);padding:20px 0;display:block}
+.work-item:first-child{border-top:none}
+.work-title{font-family:var(--fd);font-size:22px;font-weight:600;line-height:1.25;color:var(--ink)}
+a:hover .work-title{color:var(--acc)}
+.work-excerpt{color:var(--ink2);margin:6px 0}
+.work-meta{font-family:var(--fm);font-size:11px;letter-spacing:.06em;color:var(--mut)}
+
+/* --- halaman karya --- */
+.prose-mb{font-size:18.5px;line-height:1.9;max-width:700px}
+.prose-mb p{margin:0 0 1.35em}
+.prose-mb h2{font-size:26px;margin:2em 0 .7em}
+.prose-mb blockquote{border-left:3px solid var(--acc);padding:4px 0 4px 24px;margin:1.8em 0;font-family:var(--fd);font-style:italic;font-size:21px;color:var(--ink2)}
+.prose-mb em{font-style:italic}
+
+/* --- strip statistik --- */
+.stat-strip{display:flex;flex-wrap:wrap;border:1px solid var(--ink);margin:20px 0}
+.stat-box{flex:1;min-width:120px;padding:16px 18px;border-left:1px solid var(--rule)}
+.stat-box:first-child{border-left:none}
+.stat-n{font-family:var(--fd);font-size:26px;font-weight:600}
+.stat-l{font-family:var(--fm);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);margin-top:4px}
+
+/* --- badge status --- */
+.badge{display:inline-block;font-family:var(--fm);font-size:10px;letter-spacing:.1em;text-transform:uppercase;padding:3px 9px;border:1px solid;border-radius:2px}
+.badge-draft{color:var(--mut);border-color:var(--rule2)}
+.badge-submitted{color:var(--warn);border-color:var(--warn)}
+.badge-revision{color:var(--err);border-color:var(--err)}
+.badge-published{color:#fff;background:var(--ok);border-color:var(--ok)}
+
+/* --- header situs --- */
+.site-header{border-bottom:2px solid var(--ink);background:var(--ink);color:#fff}
+.site-header-in{max-width:1080px;margin:0 auto;padding:14px 24px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+.site-brand{font-family:var(--fd);font-size:24px;font-weight:640;color:#fff}
+.site-brand em{color:#4CC97B;font-style:italic;font-weight:500}
+.site-nav{display:flex;gap:18px;flex-wrap:wrap}
+.site-nav a{font-family:var(--fm);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.85)}
+.site-nav a:hover{color:#4CC97B}
+
+/* --- util --- */
+.container-mb{max-width:1080px;margin:0 auto;padding:0 24px}
+.narrow{max-width:720px}
