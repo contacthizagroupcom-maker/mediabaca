@@ -42,8 +42,8 @@ export default async function HalamanKarya({ params }: { params: Promise<{ slug:
         {karya.excerpt && <p style={{ fontStyle: "italic", color: "var(--ink2)", fontSize: 19 }}>{karya.excerpt}</p>}
 
         <div style={{ borderTop: "2px solid var(--ink)", borderBottom: "1px solid var(--rule)", padding: "12px 0", margin: "22px 0 30px", display: "flex", gap: 14, alignItems: "center", flexWrap: "wrap" }}>
-          <Link href={`/penulis/${karya.profiles?.username ?? ""}`} style={{ fontFamily: "var(--fd)", fontWeight: 600, fontSize: 17 }}>
-            {karya.profiles?.full_name ?? "Penulis MediaBaca"}
+          <Link href={`/penulis/${(karya.profiles as any)?.username ?? ""}`} style={{ fontFamily: "var(--fd)", fontWeight: 600, fontSize: 17 }}>
+            {(karya.profiles as any)?.full_name ?? "Penulis MediaBaca"}
           </Link>
           <span className="meta">
             {karya.published_at
@@ -56,7 +56,7 @@ export default async function HalamanKarya({ params }: { params: Promise<{ slug:
         <article className="prose-mb" dangerouslySetInnerHTML={{ __html: karya.content }} />
 
         <div style={{ marginTop: 44, borderTop: "1px solid var(--ink)", paddingTop: 14 }} className="meta">
-          © {new Date().getFullYear()} {karya.profiles?.full_name ?? "Penulis"}. All rights reserved. · Diterbitkan melalui MediaBaca
+          © {new Date().getFullYear()} {(karya.profiles as any)?.full_name ?? "Penulis"}. All rights reserved. · Diterbitkan melalui MediaBaca
         </div>
       </main>
     </>
