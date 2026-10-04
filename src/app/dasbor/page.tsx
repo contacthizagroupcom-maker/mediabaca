@@ -82,6 +82,7 @@ export default function Dasbor() {
           <Link href="/dasbor/tulis" className="btn btn-acc">✍️ Tulis Karya</Link>
           <Link href="/dasbor/karya" className="btn">📚 Karya Saya</Link>
           <Link href="/dasbor/profil" className="btn">👤 Profil</Link>
+          <Link href="/dasbor/pengaturan" className="btn">⚙️ Pengaturan</Link>
           <Link href={`/penulis/${profil?.username ?? ""}`} className="btn">🌍 Profil Publik</Link>
           {(peran.includes("EDITOR") || peran.includes("ADMIN")) && (
             <Link href="/editor" className="btn btn-primary">🗂️ Meja Editor</Link>
