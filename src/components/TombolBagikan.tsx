@@ -11,7 +11,7 @@ export function TombolBagikan({ judul, ringkasan }: { judul: string; ringkasan?:
       try {
         await navigator.share({ title: judul, text: ringkasan || judul, url });
       } catch {
-        // pengguna membatalkan — tidak apa-apa
+        // dibatalkan pengguna
       }
     } else {
       salin();
@@ -24,7 +24,6 @@ export function TombolBagikan({ judul, ringkasan }: { judul: string; ringkasan?:
       setTersalin(true);
       setTimeout(() => setTersalin(false), 2000);
     } catch {
-      // fallback untuk browser lama
       window.prompt("Salin tautan ini:", url);
     }
   }
@@ -42,7 +41,7 @@ export function TombolBagikan({ judul, ringkasan }: { judul: string; ringkasan?:
   };
 
   return (
-    <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginTop: 12 }}>
+    <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
       <button onClick={shareNative} className="btn btn-acc" style={{ padding: "10px 16px" }}>
         📤 Bagikan
       </button>

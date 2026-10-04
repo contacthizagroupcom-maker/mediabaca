@@ -16,7 +16,7 @@ export default async function HalamanKarya({ params }: { params: Promise<{ slug:
 
   const { data: karya } = await supabase
     .from("works")
-    .select("id, title, slug, excerpt, content, status, views_count, reading_time, published_at, author_id, profiles(full_name, username)")
+    .select("id, title, slug, excerpt, content, cover_url, status, views_count, reading_time, published_at, author_id, profiles(full_name, username)")
     .eq("slug", slug)
     .maybeSingle();
 
@@ -46,7 +46,15 @@ export default async function HalamanKarya({ params }: { params: Promise<{ slug:
         <h1 style={{ fontSize: "clamp(1.8rem, 4vw, 2.8rem)", margin: "16px 0 10px", lineHeight: 1.15 }}>{karya.title}</h1>
         {karya.excerpt && <p style={{ fontStyle: "italic", color: "var(--ink2)", fontSize: 19 }}>{karya.excerpt}</p>}
 
-        <div style={{ borderTop: "2px solid var(--ink)", borderBottom: "1px solid var(--rule)", padding: "12px 0", margin: "22px 0 30px", display: "flex", gap: 14, alignItems: "center", flexWrap: "wrap" }}>
+        {karya.cover_url && (
+          <figure style={{ margin: "26px 0 0" }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={karya.cover_url} alt={"Sampul " + karya.title}
+              style={{ width: "100%", maxHeight: 340, objectFit: "cover", borderRadius: 2, border: "1px solid var(--rule)" }} />
+          </figure>
+        )}
+
+        <div style={{ borderTop: "2px solid var(--ink)", borderBottom: "1px solid var(--rule)", padding: "12px 0", margin: "22px 0 12px", display: "flex", gap: 14, alignItems: "center", flexWrap: "wrap" }}>
           <Link href={`/penulis/${penulis?.username ?? ""}`} style={{ fontFamily: "var(--fd)", fontWeight: 600, fontSize: 17 }}>
             {penulis?.full_name ?? "Penulis MediaBaca"}
           </Link>
@@ -58,7 +66,12 @@ export default async function HalamanKarya({ params }: { params: Promise<{ slug:
           </span>
         </div>
 
-        <article className="prose-mb" dangerouslySetInnerHTML={{ __html: karya.content }} />
+        <TombolBagikan judul={karya.title} ringkasan={karya.excerpt ?? undefined} />
+        <div style={{ marginTop: 10 }}>
+          <TombolLaporkan targetType="work" targetId={karya.id} />
+        </div>
+
+        <article className="prose-mb" style={{ marginTop: 26 }} dangerouslySetInnerHTML={{ __html: karya.content }} />
 
         <div style={{ marginTop: 44, borderTop: "1px solid var(--ink)", paddingTop: 14 }} className="meta">
           © {new Date().getFullYear()} {penulis?.full_name ?? "Penulis"}. All rights reserved. · Diterbitkan melalui MediaBaca
