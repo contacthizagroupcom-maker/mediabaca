@@ -166,7 +166,7 @@ export default function HalamanTulis() {
 
           <div className="field">
             <label htmlFor="isi">Isi Karya</label>
-            <textarea id="isi" className="input" style={{ minHeight: 340, fontSize: 17, lineHeight: 1.85, fontFamily: "var(--fb)" }} value={isi}
+            <textarea id="isi" className="input" style={{ minHeight: 340, fontSize: 17, lineHeight: 1.85 }} value={isi}
               onChange={e => setIsi(e.target.value)} placeholder="Tulis di sini… (mendukung HTML sederhana: <p>, <h2>, <blockquote>, <em>)" />
             <p className="meta" style={{ textAlign: "right", marginTop: 6 }}>
               {jumlahKata} kata · ±{Math.max(1, Math.round(jumlahKata / 200))} menit baca
@@ -184,12 +184,8 @@ export default function HalamanTulis() {
           </div>
 
           <div className="field">
-            <label htmlFor="sampul">URL Sampul (opsional)</label>
-            <div style={{ display: "flex", gap: 8 }}>
-              <input id="sampul" className="input" value={sampul} onChange={e => setSampul(e.target.value)} placeholder="https://…" />
-              <button type="button" onClick={() => setSampul(`https://picsum.photos/seed/mb${Math.floor(Math.random() * 99999)}/1200/520`)}
-                className="btn" style={{ whiteSpace: "nowrap" }}>↺ Acak</button>
-            </div>
+            <label>Sampul Karya</label>
+            <UploadSampul nilai={sampul} onChange={setSampul} label="sampul" />
           </div>
 
           <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
