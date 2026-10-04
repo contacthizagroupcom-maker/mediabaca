@@ -53,7 +53,7 @@ export default async function Jelajahi({ searchParams }: { searchParams: Promise
         <div className="site-header-in">
           <Link href="/" className="site-brand">Media<em>Baca</em></Link>
           <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
-            <nav className="site-nav"><Link href="/">Beranda</Link></nav>
+            <nav className="site-nav"><Link href="/">Beranda</Link><Link href="/search">Cari</Link></nav>
             <TemaToggle />
           </div>
         </div>

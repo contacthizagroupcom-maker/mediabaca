@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Fraunces, Newsreader, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
+import { PWARegister } from "@/components/PWARegister";
 
 const fraunces = Fraunces({ subsets: ["latin"], variable: "--font-fd" });
 const newsreader = Newsreader({ subsets: ["latin"], variable: "--font-fb" });
@@ -17,6 +18,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="id">
       <body className={`${fraunces.variable} ${newsreader.variable} ${plexmono.variable}`}>
         {children}
+        <PWARegister />
       </body>
     </html>
   );
