@@ -51,17 +51,15 @@ export default function Dasbor() {
   }
 
   const kartu = [
-    { label: "Total Karya", nilai: stat.total, href: "/dasbor/karya" },
-    { label: "Draft", nilai: stat.draft, href: "/dasbor/karya" },
-    { label: "Dalam Review", nilai: stat.review, href: "/dasbor/karya" },
-    { label: "Terbit", nilai: stat.terbit, href: "/dasbor/karya" },
+    { label: "Total Karya", nilai: stat.total },
+    { label: "Draft", nilai: stat.draft },
+    { label: "Dalam Review", nilai: stat.review },
+    { label: "Terbit", nilai: stat.terbit },
   ];
 
   return (
     <>
-      <HeaderDalam judul="Dasbor Penulis" aksi={
-        <button onClick={keluar} className="btn">Keluar</button>
-      } />
+      <HeaderDalam judul="Dasbor Penulis" aksi={<button onClick={keluar} className="btn">Keluar</button>} />
       <main className="container-mb narrow" style={{ padding: "24px 24px 80px" }}>
         <h1 style={{ fontSize: "clamp(1.8rem, 4vw, 2.6rem)", margin: "8px 0 6px" }}>
           Halo, {profil?.full_name ?? "Penulis"} 👋
@@ -73,10 +71,10 @@ export default function Dasbor() {
 
         <div className="stat-strip">
           {kartu.map(k => (
-            <Link key={k.label} href={k.href} className="stat-box" style={{ textDecoration: "none" }}>
+            <div key={k.label} className="stat-box">
               <div className="stat-n">{k.nilai}</div>
               <div className="stat-l">{k.label}</div>
-            </Link>
+            </div>
           ))}
         </div>
 
@@ -87,6 +85,9 @@ export default function Dasbor() {
           <Link href={`/penulis/${profil?.username ?? ""}`} className="btn">🌍 Profil Publik</Link>
           {(peran.includes("EDITOR") || peran.includes("ADMIN")) && (
             <Link href="/editor" className="btn btn-primary">🗂️ Meja Editor</Link>
+          )}
+          {peran.includes("ADMIN") && (
+            <Link href="/admin" className="btn btn-primary">🛡️ Admin</Link>
           )}
         </div>
       </main>
