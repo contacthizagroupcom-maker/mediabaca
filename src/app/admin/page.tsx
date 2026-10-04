@@ -51,9 +51,9 @@ export default function Admin() {
       terbit: k.filter((x: any) => x.status === "PUBLISHED").length,
       review: k.filter((x: any) => ["SUBMITTED", "IN_REVIEW", "REVISION_REQUIRED"].includes(x.status)).length,
       komentar: ckm ?? 0,
-      pembaca: k.reduce((s: number, x: any) => s + (x.views_count ?? 0), 0),
+      pembaca: k.reduce((s: any, x: any) => Number(s) + (x.views_count ?? 0), 0),
     });
-    setKarya(k.sort((a: any, b: any) => new Date(b.updated_at) - new Date(a.updated_at)));
+    setKarya(k.sort((a: any, b: any) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()));
 
     const { data: pp } = await supabase
       .from("profiles").select("id, full_name, username, created_at").order("created_at", { ascending: false });
@@ -63,7 +63,7 @@ export default function Admin() {
     (roles ?? []).forEach((r: any) => {
       peta.set(r.user_id, [...(peta.get(r.user_id) ?? []), r.role_id]);
     });
-    setPengguna(daftarP.map(p => ({ ...p, peran: (peta.get(p.id) ?? ["READER"]).join(" · ") })));
+    setPengguna(daftarP.map((p: any) => ({ ...p, peran: (peta.get(p.id) ?? ["READER"]).join(" · ") })));
 
     const { data: lr } = await supabase
       .from("reports").select("id, target_type, reason, status, created_at").order("created_at", { ascending: false });
