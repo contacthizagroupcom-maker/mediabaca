@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { getSupabaseBrowserClient } from "@/lib/supabase";
 import { HeaderDalam } from "@/components/AppShell";
 import { UploadSampul } from "@/components/UploadSampul";
+import { EditorTeks } from "@/components/EditorTeks";
 
 const JENIS = [
   { id: "NONFICTION", label: "Nonfiksi" },
@@ -20,11 +21,19 @@ function slugify(s: string) {
     .replace(/[^a-z0-9\s-]/g, "").trim().replace(/[\s-]+/g, "-").replace(/^-|-$/g, "");
 }
 
+function hitungKata(html: string) {
+  const teks = html.replace(/<[^>]+>/g, " ");
+  return teks.trim() ? teks.trim().split(/\s+/).length : 0;
+}
+
 type Kategori = { id: string; name: string; parent_id: string | null };
 
-export default function HalamanTulis() {
+function IsiTulis() {
   const router = useRouter();
+  const cari = useSearchParams();
   const supabase = getSupabaseBrowserClient();
+  const editId = cari.get("edit");
+
   const [judul, setJudul] = useState("");
   const [ringkasan, setRingkasan] = useState("");
   const [isi, setIsi] = useState("");
@@ -35,8 +44,10 @@ export default function HalamanTulis() {
   const [abstrak, setAbstrak] = useState("");
   const [kataKunci, setKataKunci] = useState("");
   const [daftarKategori, setDaftarKategori] = useState<Kategori[]>([]);
+  const [status, setStatus] = useState("DRAFT");
   const [galat, setGalat] = useState("");
   const [proses, setProses] = useState(false);
+  const [memuat, setMemuat] = useState(true);
 
   useEffect(() => {
     (async () => {
@@ -44,75 +55,105 @@ export default function HalamanTulis() {
       if (!user) { router.push("/masuk"); return; }
       const { data } = await supabase.from("categories").select("id, name, parent_id");
       setDaftarKategori(data ?? []);
+
+      if (editId) {
+        const { data: k } = await supabase
+          .from("works").select("title, excerpt, content, content_type, category_id, cover_url, status")
+          .eq("id", editId).maybeSingle();
+        if (k) {
+          setJudul(k.title ?? ""); setRingkasan(k.excerpt ?? ""); setIsi(k.content ?? "");
+          setJenis(k.content_type ?? "NONFICTION"); setKategori(k.category_id ?? "");
+          setSampul(k.cover_url ?? ""); setStatus(k.status ?? "DRAFT");
+          const { data: am } = await supabase
+            .from("academic_metadata").select("abstract, keywords").eq("work_id", editId).maybeSingle();
+          if (am) { setAbstrak(am.abstract ?? ""); setKataKunci(am.keywords ?? ""); }
+          const { data: wt } = await supabase
+            .from("work_tags").select("tags(name)").eq("work_id", editId);
+          if (wt) setTagStr(wt.map((x: any) => x.tags?.name).filter(Boolean).join(", "));
+        }
+      }
+      setMemuat(false);
     })();
-  }, [router, supabase]);
+  }, [editId, router, supabase]);
 
   const induk = daftarKategori.filter(k => !k.parent_id);
-  const jumlahKata = isi.trim() ? isi.trim().split(/\s+/).length : 0;
-
-  async function slugUnik(dasar: string) {
-    let s = dasar || "karya";
-    let n = 2;
-    while (true) {
-      const { data } = await supabase.from("works").select("id").eq("slug", s).maybeSingle();
-      if (!data) return s;
-      s = dasar + "-" + n; n++;
-    }
-  }
+  const jumlahKata = hitungKata(isi);
 
   async function simpan(kirim: boolean) {
     setGalat("");
     if (!judul.trim()) { setGalat("Judul wajib diisi."); return; }
-    if (kirim && !kategori) { setGalat("Pilih kategori sebelum mengirim untuk review."); return; }
-    if (kirim && jumlahKata < 20) { setGalat("Isi karya masih terlalu pendek (minimal ±20 kata)."); return; }
+    if (kirim && !kategori) { setGalat("Pilih kategori."); return; }
+    if (kirim && jumlahKata < 20) { setGalat("Isi masih terlalu pendek."); return; }
     if (kirim && jenis === "ACADEMIC" && (!abstrak.trim() || !kataKunci.trim())) {
-      setGalat("Karya akademik wajib mengisi abstrak dan kata kunci."); return;
+      setGalat("Karya akademik wajib abstrak + kata kunci."); return;
     }
     setProses(true);
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { router.push("/masuk"); return; }
 
-    const slug = await slugUnik(slugify(judul));
-    const { data: baru, error } = await supabase
-      .from("works")
-      .insert({
-        author_id: user.id, title: judul.trim(), slug,
-        excerpt: ringkasan.trim() || isi.trim().slice(0, 180),
-        content: isi, cover_url: sampul.trim(), content_type: jenis,
-        category_id: kategori || null,
-        fiction_format: jenis === "FICTION" ? "short" : null,
-        status: "DRAFT", reading_time: Math.max(1, Math.round(jumlahKata / 200)),
-      })
-      .select("id").single();
+    const dataKarya = {
+      title: judul.trim(),
+      excerpt: ringkasan.trim() || isi.replace(/<[^>]+>/g, " ").trim().slice(0, 180),
+      content: isi,
+      cover_url: sampul.trim(),
+      content_type: jenis,
+      category_id: kategori || null,
+      reading_time: Math.max(1, Math.round(jumlahKata / 200)),
+      ...(editId ? {} : { author_id: user.id, status: "DRAFT" as const }),
+    };
 
-    if (error || !baru) { setGalat("Gagal menyimpan: " + (error?.message ?? "??")); setProses(false); return; }
-
-    if (jenis === "ACADEMIC") {
-      await supabase.from("academic_metadata").insert({
-        work_id: baru.id, abstract: abstrak.trim(), keywords: kataKunci.trim(),
-      });
+    let idKarya = editId;
+    if (editId) {
+      const { error } = await supabase.from("works").update(dataKarya).eq("id", editId);
+      if (error) { setGalat("Gagal menyimpan: " + error.message); setProses(false); return; }
+    } else {
+      let slug = slugify(judul) || "karya";
+      let n = 2;
+      while (true) {
+        const { data } = await supabase.from("works").select("id").eq("slug", slug).maybeSingle();
+        if (!data) break;
+        slug = slugify(judul) + "-" + n; n++;
+      }
+      const { data: baru, error } = await supabase
+        .from("works").insert({ ...dataKarya, slug, fiction_format: jenis === "FICTION" ? "short" : null })
+        .select("id").single();
+      if (error || !baru) { setGalat("Gagal menyimpan: " + error.message); setProses(false); return; }
+      idKarya = baru.id;
     }
 
-    const tags = tagStr.split(",").map(t => t.trim()).filter(Boolean).slice(0, 8);
-    for (const t of tags) {
-      const idTag = slugify(t) || "tag";
-      const { data: ada } = await supabase.from("tags").select("id").eq("id", idTag).maybeSingle();
-      if (!ada) await supabase.from("tags").insert({ id: idTag, name: t, slug: idTag });
-      await supabase.from("work_tags").insert({ work_id: baru.id, tag_id: idTag });
+    if (jenis === "ACADEMIC") {
+      const { data: ada } = await supabase
+        .from("academic_metadata").select("id").eq("work_id", idKarya).maybeSingle();
+      if (ada) {
+        await supabase.from("academic_metadata")
+          .update({ abstract: abstrak.trim(), keywords: kataKunci.trim() }).eq("work_id", idKarya);
+      } else {
+        await supabase.from("academic_metadata")
+          .insert({ work_id: idKarya, abstract: abstrak.trim(), keywords: kataKunci.trim() });
+      }
     }
 
     if (kirim) {
-      const { error: eSub } = await supabase.from("works").update({ status: "SUBMITTED" }).eq("id", baru.id);
-      if (eSub) { setGalat("Tersimpan sebagai draft, tapi gagal mengirim: " + eSub.message); setProses(false); return; }
+      const { error: eSub } = await supabase.from("works").update({ status: "SUBMITTED" }).eq("id", idKarya);
+      if (eSub) { setGalat("Tersimpan, tapi gagal mengirim: " + eSub.message); setProses(false); return; }
     }
     router.push("/dasbor/karya");
   }
 
+  if (memuat) {
+    return <main className="container-mb"><p style={{ padding: 60, color: "var(--mut)" }}>Memuat…</p></main>;
+  }
+
   return (
     <>
-      <HeaderDalam judul="Tulis Karya" aksi={<Link href="/dasbor" className="btn">← Dasbor</Link>} />
+      <HeaderDalam judul={editId ? "Edit Karya" : "Tulis Karya"} aksi={<Link href="/dasbor/karya" className="btn">← Karya Saya</Link>} />
       <main className="container-mb narrow" style={{ padding: "24px 24px 80px" }}>
         {galat && <p style={{ color: "var(--err)", border: "1px solid var(--err)", background: "var(--paper2)", padding: "12px 16px", borderRadius: 4, marginBottom: 16 }}>{galat}</p>}
+        {editId && status !== "DRAFT" && (
+          <p style={{ background: "var(--paper2)", border: "1px solid var(--warn)", color: "var(--warn)", padding: 12, borderRadius: 4, marginBottom: 16, fontSize: 14 }}>
+            Status karya ini: {status}. Perubahan yang disimpan akan mengembalikan status ke kondisi semula — gunakan tombol kirim ulang jika sudah layak.
+          </p>
+        )}
 
         <input
           value={judul}
@@ -120,9 +161,7 @@ export default function HalamanTulis() {
           placeholder="Judul karya…"
           style={{ width: "100%", fontSize: "clamp(1.5rem, 4vw, 2.2rem)", fontFamily: "var(--fd)", fontWeight: 600, padding: "8px 0", border: "none", borderBottom: "2px solid var(--rule2)", background: "transparent", color: "var(--ink)", outline: "none" }}
         />
-        <p className="meta" style={{ margin: "8px 0 20px" }}>
-          /karya/{slugify(judul) || "otomatis-dari-judul"}
-        </p>
+        <p className="meta" style={{ margin: "8px 0 20px" }}>/karya/{slugify(judul) || "otomatis-dari-judul"}</p>
 
         <div style={{ display: "grid", gap: 16 }}>
           <div className="field">
@@ -165,9 +204,8 @@ export default function HalamanTulis() {
           )}
 
           <div className="field">
-            <label htmlFor="isi">Isi Karya</label>
-            <textarea id="isi" className="input" style={{ minHeight: 340, fontSize: 17, lineHeight: 1.85 }} value={isi}
-              onChange={e => setIsi(e.target.value)} placeholder="Tulis di sini… (mendukung HTML sederhana: <p>, <h2>, <blockquote>, <em>)" />
+            <label>Isi Karya</label>
+            <EditorTeks nilai={isi} onChange={setIsi} />
             <p className="meta" style={{ textAlign: "right", marginTop: 6 }}>
               {jumlahKata} kata · ±{Math.max(1, Math.round(jumlahKata / 200))} menit baca
             </p>
@@ -188,16 +226,24 @@ export default function HalamanTulis() {
             <UploadSampul nilai={sampul} onChange={setSampul} label="sampul" />
           </div>
 
-          <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
-            <button onClick={() => simpan(false)} disabled={proses} className="btn" style={{ flex: 1, justifyContent: "center" }}>
-              Simpan Draft
+          <div style={{ display: "flex", gap: 10, marginTop: 12, flexWrap: "wrap" }}>
+            <button onClick={() => simpan(false)} disabled={proses} className="btn" style={{ flex: 1, justifyContent: "center", minWidth: 140 }}>
+              {editId ? "Simpan Perubahan" : "Simpan Draft"}
             </button>
-            <button onClick={() => simpan(true)} disabled={proses} className="btn btn-acc" style={{ flex: 1, justifyContent: "center" }}>
-              {proses ? "Memproses…" : "Kirim untuk Review"}
+            <button onClick={() => simpan(true)} disabled={proses} className="btn btn-acc" style={{ flex: 1, justifyContent: "center", minWidth: 140 }}>
+              {proses ? "Memproses…" : editId && status !== "PUBLISHED" ? "Kirim / Kirim Ulang" : "Kirim untuk Review"}
             </button>
           </div>
         </div>
       </main>
     </>
+  );
+}
+
+export default function HalamanTulisLuar() {
+  return (
+    <Suspense fallback={<main className="container-mb"><p style={{ padding: 60, color: "var(--mut)" }}>Memuat…</p></main>}>
+      <IsiTulis />
+    </Suspense>
   );
 }

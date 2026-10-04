@@ -89,17 +89,18 @@ export default function KaryaSaya() {
                     </div>
                   )}
 
-                  {k.status === "DRAFT" && (
-                    <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-                      <button onClick={() => kirimReview(k.id)} disabled={sibuk} className="btn btn-acc" style={{ padding: "8px 14px", fontSize: 10 }}>Kirim untuk Review</button>
-                      <button onClick={() => hapus(k.id)} disabled={sibuk} className="btn" style={{ padding: "8px 14px", fontSize: 10, borderColor: "var(--err)", color: "var(--err)" }}>Hapus</button>
-                    </div>
-                  )}
-                  {k.status === "REVISION_REQUIRED" && (
-                    <div style={{ marginTop: 12 }}>
+                  <div style={{ display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
+                    <Link href={`/dasbor/tulis?edit=${k.id}`} className="btn" style={{ padding: "8px 14px", fontSize: 10 }}>✏️ Edit</Link>
+                    {k.status === "DRAFT" && (
+                      <>
+                        <button onClick={() => kirimReview(k.id)} disabled={sibuk} className="btn btn-acc" style={{ padding: "8px 14px", fontSize: 10 }}>Kirim untuk Review</button>
+                        <button onClick={() => hapus(k.id)} disabled={sibuk} className="btn" style={{ padding: "8px 14px", fontSize: 10, borderColor: "var(--err)", color: "var(--err)" }}>Hapus</button>
+                      </>
+                    )}
+                    {k.status === "REVISION_REQUIRED" && (
                       <button onClick={() => kirimReview(k.id)} disabled={sibuk} className="btn btn-acc" style={{ padding: "8px 14px", fontSize: 10 }}>↺ Perbaiki & Kirim Ulang</button>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
               );
             })}
