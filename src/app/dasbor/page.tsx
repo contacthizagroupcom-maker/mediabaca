@@ -24,7 +24,7 @@ export default function Dasbor() {
       }
       const { data: ur } = await supabase
         .from("user_roles").select("role_id").eq("user_id", user.id);
-      const daftar = (ur ?? []).map(r => r.role_id);
+      const daftar = (ur ?? []).map((r: any) => r.role_id);
       setPeran(daftar.join(" · ") || "READER");
       setMemuat(false);
     })();

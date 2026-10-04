@@ -28,7 +28,7 @@ export default function KaryaSaya() {
     setKarya(data ?? []);
     const { data: rev } = await supabase
       .from("revisions").select("id, work_id, note, created_at")
-      .in("work_id", (data ?? []).map(k => k.id));
+      .in("work_id", (data ?? []).map((k: any) => k.id));
     setRevisi(rev ?? []);
     setMemuat(false);
   }

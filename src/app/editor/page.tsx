@@ -34,7 +34,7 @@ export default function MejaEditor() {
       if (!user) { router.push("/masuk"); return; }
       const { data: saya } = await supabase
         .from("user_roles").select("role_id").eq("user_id", user.id);
-      const peran = (saya ?? []).map(r => r.role_id);
+      const peran = (saya ?? []).map((r: any) => r.role_id);
       if (!peran.includes("EDITOR") && !peran.includes("ADMIN")) {
         setBukanEditor(true); setMemuat(false); return;
       }
