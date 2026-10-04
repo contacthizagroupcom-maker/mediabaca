@@ -6,6 +6,34 @@ export const dynamic = "force-dynamic";
 
 const AVATAR_FALLBACK = "https://picsum.photos/seed/mb-anon/200/200.jpg";
 
+import type { Metadata } from "next";
+
+async function ambilProfil(username: string) {
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    { cookies: { getAll: () => [], setAll: () => {} } }
+  );
+  const { data } = await supabase.from("profiles")
+    .select("id, full_name, username, bio, avatar_url").eq("username", username).maybeSingle();
+  return data;
+}
+
+export async function generateMetadata({ params }: { params: Promise<{ username: string }> }): Promise<Metadata> {
+  const { username } = await params;
+  const p = await ambilProfil(decodeURIComponent(username));
+  if (!p) return { title: "Penulis tidak ditemukan — MediaBaca" };
+  return {
+    title: `${p.full_name} (@${p.username}) — MediaBaca`,
+    description: (p.bio || `Profil dan karya-karya ${p.full_name} di MediaBaca.`).slice(0, 155),
+    openGraph: {
+      title: `${p.full_name} — MediaBaca`,
+      description: (p.bio || `Karya-karya ${p.full_name} di MediaBaca.`).slice(0, 155),
+      images: p.avatar_url ? [{ url: p.avatar_url }] : undefined,
+    },
+  };
+}
+
 export default async function ProfilPenulis({ params }: { params: Promise<{ username: string }> }) {
   const { username } = await params;
   const supabase = createServerClient(

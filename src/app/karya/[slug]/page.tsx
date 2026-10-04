@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { createServerClient } from "@supabase/ssr";
 import { SukaDanKomentar } from "@/components/KomentarSuka";
@@ -6,19 +7,52 @@ import { TombolLaporkan } from "@/components/Laporkan";
 
 export const dynamic = "force-dynamic";
 
-export default async function HalamanKarya({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params;
+async function ambilKarya(slug: string) {
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     { cookies: { getAll: () => [], setAll: () => {} } }
   );
-
-  const { data: karya } = await supabase
+  const { data } = await supabase
     .from("works")
     .select("id, title, slug, excerpt, content, cover_url, status, views_count, reading_time, published_at, author_id, profiles(full_name, username)")
     .eq("slug", slug)
     .maybeSingle();
+  return data;
+}
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const karya = await ambilKarya(slug);
+  if (!karya || karya.status !== "PUBLISHED") {
+    return { title: "Karya tidak ditemukan — MediaBaca" };
+  }
+  const penulis = karya.profiles as any;
+  const deskripsi = (karya.excerpt || "Baca karya ini di MediaBaca.").slice(0, 155);
+  return {
+    title: `${karya.title} — ${penulis?.full_name ?? "MediaBaca"}`,
+    description: deskripsi,
+    authors: [{ name: penulis?.full_name ?? "Penulis MediaBaca" }],
+    openGraph: {
+      title: karya.title,
+      description: deskripsi,
+      type: "article",
+      siteName: "MediaBaca",
+      images: karya.cover_url ? [{ url: karya.cover_url, width: 1200, height: 520, alt: karya.title }] : undefined,
+      publishedTime: karya.published_at ?? undefined,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: karya.title,
+      description: deskripsi,
+      images: karya.cover_url ? [karya.cover_url] : undefined,
+    },
+  };
+}
+
+export default async function HalamanKarya({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const karya = await ambilKarya(slug);
 
   if (!karya || karya.status !== "PUBLISHED") {
     return (
@@ -32,6 +66,17 @@ export default async function HalamanKarya({ params }: { params: Promise<{ slug:
   }
 
   const penulis = karya.profiles as any;
+
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: karya.title,
+    description: karya.excerpt ?? "",
+    image: karya.cover_url ?? undefined,
+    datePublished: karya.published_at ?? undefined,
+    author: { "@type": "Person", name: penulis?.full_name ?? "Penulis MediaBaca" },
+    publisher: { "@type": "Organization", name: "MediaBaca" },
+  };
 
   return (
     <>
@@ -84,6 +129,8 @@ export default async function HalamanKarya({ params }: { params: Promise<{ slug:
           authorUsername={penulis?.username ?? ""}
         />
       </main>
+
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
     </>
   );
 }
