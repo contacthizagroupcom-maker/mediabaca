@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { getSupabaseBrowserClient } from "@/lib/supabase";
 import { HeaderDalam } from "@/components/AppShell";
+import { UploadSampul } from "@/components/UploadSampul";
 
 const JENIS = [
   { id: "NONFICTION", label: "Nonfiksi" },
