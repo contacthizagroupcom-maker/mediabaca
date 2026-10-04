@@ -9,6 +9,7 @@ const plexmono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400", "500"], var
 export const metadata: Metadata = {
   title: "MediaBaca — Ruang untuk Membaca, Menulis, dan Berbagi Gagasan.",
   description: "Jurnal digital multi-penulis untuk karya akademik, fiksi, nonfiksi, opini, dan jurnalistik.",
+  verification: { google: "gzYq32MDXvFEXkiys7IhtInbzr92nD8ziZiejnptwbo" },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
