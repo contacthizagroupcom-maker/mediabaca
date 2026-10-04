@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createServerClient } from "@supabase/ssr";
 import { SukaDanKomentar } from "@/components/KomentarSuka";
+import { TombolBagikan } from "@/components/TombolBagikan";
 
 export const dynamic = "force-dynamic";
 
