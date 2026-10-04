@@ -4,10 +4,11 @@ import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { getSupabaseBrowserClient } from "@/lib/supabase";
+import { HeaderDalam } from "@/components/AppShell";
 
 type Karya = {
   id: string; title: string; slug: string; excerpt: string; content: string;
-  status: string; content_type: string; author_id: string;
+  status: string; author_id: string;
   profiles: { full_name: string; username: string } | null;
 };
 
@@ -27,19 +28,15 @@ export default function TinjauKarya() {
       if (!user) { router.push("/masuk"); return; }
       const { data } = await supabase
         .from("works")
-        .select("id, title, slug, excerpt, content, status, content_type, author_id, profiles(full_name, username)")
-        .eq("id", params.id)
-        .maybeSingle();
+        .select("id, title, slug, excerpt, content, status, author_id, profiles(full_name, username)")
+        .eq("id", params.id).maybeSingle();
       setKarya(data ?? null);
       setMemuat(false);
     })();
   }, [params.id, router, supabase]);
 
   async function putuskan(aksi: "PUBLISHED" | "REVISION_REQUIRED" | "REJECTED") {
-    if (!karya || !catatan.trim()) {
-      setGalat("Catatan wajib diisi sebelum mengambil keputusan.");
-      return;
-    }
+    if (!karya || !catatan.trim()) { setGalat("Catatan wajib diisi sebelum mengambil keputusan."); return; }
     setSibuk(true); setGalat("");
     if (aksi !== "PUBLISHED") {
       await supabase.from("revisions").insert({
@@ -63,37 +60,49 @@ export default function TinjauKarya() {
   }
 
   if (memuat) {
-    return <main style={{ maxWidth: 700, margin: "0 auto", padding: 40, fontFamily: "Georgia, serif" }}><p>Memuat…</p></main>;
+    return <main className="container-mb"><p style={{ padding: 60, color: "var(--mut)" }}>Memuat…</p></main>;
   }
 
   if (!karya) {
     return (
-      <main style={{ maxWidth: 640, margin: "0 auto", padding: 60, fontFamily: "Georgia, serif", textAlign: "center" }}>
-        <h1 style={{ fontSize: 24 }}>Karya tidak ditemukan</h1>
-        <Link href="/editor" style={{ color: "#0B7A3E" }}>← Kembali ke meja editor</Link>
-      </main>
+      <>
+        <HeaderDalam judul="Tinjau Karya" />
+        <main className="container-mb narrow" style={{ padding: "60px 24px", textAlign: "center" }}>
+          <h1 style={{ fontSize: 24, marginBottom: 20 }}>Karya tidak ditemukan</h1>
+          <Link href="/editor" className="btn btn-primary">← Meja Editor</Link>
+        </main>
+      </>
     );
   }
 
   return (
-    <main style={{ maxWidth: 700, margin: "0 auto", padding: 40, fontFamily: "Georgia, serif" }}>
-      <Link href="/editor" style={{ color: "#0B7A3E", textDecoration: "none" }}>← Meja Editor</Link>
-      <h1 style={{ fontSize: 32, margin: "16px 0 8px" }}>{karya.title}</h1>
-      <p style={{ color: "#888" }}>oleh {karya.profiles?.full_name ?? "Penulis"} · status saat ini: <b>{karya.status}</b></p>
-      <p style={{ fontStyle: "italic", color: "#555", marginTop: 12 }}>{karya.excerpt}</p>
-      <hr style={{ border: "none", borderTop: "1px solid #0D120D", margin: "20px 0" }} />
-      <article style={{ fontSize: 18, lineHeight: 1.9, color: "#1a1a1a", whiteSpace: "pre-wrap" }} dangerouslySetInnerHTML={{ __html: karya.content }} />
-      <hr style={{ border: "none", borderTop: "1px solid #0D120D", margin: "36px 0" }} />
-      <h2 style={{ fontSize: 20 }}>Keputusan Editorial</h2>
-      {galat && <p style={{ color: "#B3261E", background: "#FBEAEA", padding: 10, borderRadius: 4 }}>{galat}</p>}
-      <textarea value={catatan} onChange={e => setCatatan(e.target.value)}
-        placeholder="Catatan untuk penulis (wajib) — spesifik dan membangun…"
-        style={{ width: "100%", minHeight: 110, padding: 12, border: "1px solid #C7D2C7", borderRadius: 4, fontSize: 15, boxSizing: "border-box", background: "#fff", color: "#0D120D", marginTop: 10 }} />
-      <div style={{ display: "flex", gap: 10, marginTop: 16, flexWrap: "wrap" }}>
-        <button onClick={() => putuskan("PUBLISHED")} disabled={sibuk} style={{ padding: 14, background: "#0B7A3E", color: "#fff", border: "none", borderRadius: 4, fontSize: 15, cursor: "pointer" }}>✅ Setujui & Terbitkan</button>
-        <button onClick={() => putuskan("REVISION_REQUIRED")} disabled={sibuk} style={{ padding: 14, background: "#8A6A1F", color: "#fff", border: "none", borderRadius: 4, fontSize: 15, cursor: "pointer" }}>↺ Minta Revisi</button>
-        <button onClick={() => putuskan("REJECTED")} disabled={sibuk} style={{ padding: 14, background: "#B3261E", color: "#fff", border: "none", borderRadius: 4, fontSize: 15, cursor: "pointer" }}>✕ Tolak</button>
-      </div>
-    </main>
+    <>
+      <HeaderDalam judul="Tinjau Karya" aksi={<Link href="/editor" className="btn">← Meja Editor</Link>} />
+      <main className="container-mb narrow" style={{ padding: "24px 24px 80px" }}>
+        <div className="kicker"><span className="idx">§</span> {karya.profiles?.full_name?.toUpperCase() ?? "PENULIS"} <span className="krule"></span></div>
+        <h1 style={{ fontSize: "clamp(1.7rem, 4vw, 2.5rem)", margin: "12px 0 8px", lineHeight: 1.15 }}>{karya.title}</h1>
+        <p className="meta" style={{ marginBottom: 20 }}>oleh {karya.profiles?.full_name ?? "Penulis"} · status: {karya.status}</p>
+        {karya.excerpt && <p style={{ fontStyle: "italic", color: "var(--ink2)", fontSize: 18, marginBottom: 20 }}>{karya.excerpt}</p>}
+
+        <div style={{ borderTop: "2px solid var(--ink)", margin: "12px 0 24px" }} />
+        <article className="prose-mb" dangerouslySetInnerHTML={{ __html: karya.content }} />
+        <div style={{ borderTop: "1px solid var(--ink)", margin: "32px 0 24px" }} />
+
+        <div className="kicker" style={{ marginBottom: 14 }}><span className="idx">!</span> KEPUTUSAN EDITORIAL <span className="krule"></span></div>
+        {galat && <p style={{ color: "var(--err)", border: "1px solid var(--err)", padding: 12, borderRadius: 4, marginBottom: 14 }}>{galat}</p>}
+
+        <div className="field">
+          <label htmlFor="catatan">Catatan untuk penulis (wajib)</label>
+          <textarea id="catatan" className="input" style={{ minHeight: 110 }} value={catatan}
+            onChange={e => setCatatan(e.target.value)} placeholder="Spesifik dan membangun…" />
+        </div>
+
+        <div style={{ display: "flex", gap: 10, marginTop: 16, flexWrap: "wrap" }}>
+          <button onClick={() => putuskan("PUBLISHED")} disabled={sibuk} className="btn btn-acc">✅ Setujui & Terbitkan</button>
+          <button onClick={() => putuskan("REVISION_REQUIRED")} disabled={sibuk} className="btn" style={{ borderColor: "var(--warn)", color: "var(--warn)" }}>↺ Minta Revisi</button>
+          <button onClick={() => putuskan("REJECTED")} disabled={sibuk} className="btn" style={{ borderColor: "var(--err)", color: "var(--err)" }}>✕ Tolak</button>
+        </div>
+      </main>
+    </>
   );
 }

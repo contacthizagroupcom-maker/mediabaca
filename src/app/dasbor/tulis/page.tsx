@@ -4,20 +4,14 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { getSupabaseBrowserClient } from "@/lib/supabase";
+import { HeaderDalam } from "@/components/AppShell";
 
 const JENIS = [
   { id: "NONFICTION", label: "Nonfiksi" },
   { id: "FICTION", label: "Fiksi" },
   { id: "ACADEMIC", label: "Akademik" },
-  { id: "OPINION", label: "Opini & Gagasan" },
+  { id: "OPINION", label: "Opini" },
   { id: "JOURNALISM", label: "Jurnalistik" },
-];
-
-const FIKSI = [
-  { id: "short", label: "Cerpen / pendek" },
-  { id: "novel", label: "Novel" },
-  { id: "poetry", label: "Puisi" },
-  { id: "prose", label: "Prosa" },
 ];
 
 function slugify(s: string) {
@@ -25,21 +19,16 @@ function slugify(s: string) {
     .replace(/[^a-z0-9\s-]/g, "").trim().replace(/[\s-]+/g, "-").replace(/^-|-$/g, "");
 }
 
-const inGaya = { width: "100%", padding: 12, border: "1px solid #C7D2C7", borderRadius: 4, fontSize: 16, background: "#fff", color: "#0D120D", boxSizing: "border-box" } as const;
-const labGaya = { display: "block", marginBottom: 6, fontSize: 13, fontWeight: "bold", color: "#2C372C" } as const;
-
 type Kategori = { id: string; name: string; parent_id: string | null };
 
 export default function HalamanTulis() {
   const router = useRouter();
   const supabase = getSupabaseBrowserClient();
-
   const [judul, setJudul] = useState("");
   const [ringkasan, setRingkasan] = useState("");
   const [isi, setIsi] = useState("");
   const [jenis, setJenis] = useState("NONFICTION");
   const [kategori, setKategori] = useState("");
-  const [formatFiksi, setFormatFiksi] = useState("short");
   const [tagStr, setTagStr] = useState("");
   const [sampul, setSampul] = useState("");
   const [abstrak, setAbstrak] = useState("");
@@ -79,31 +68,23 @@ export default function HalamanTulis() {
       setGalat("Karya akademik wajib mengisi abstrak dan kata kunci."); return;
     }
     setProses(true);
-
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { router.push("/masuk"); return; }
 
     const slug = await slugUnik(slugify(judul));
-    const ringkasanFinal = ringkasan.trim() || isi.trim().slice(0, 180);
-    const waktuBaca = Math.max(1, Math.round(jumlahKata / 200));
-
     const { data: baru, error } = await supabase
       .from("works")
       .insert({
         author_id: user.id, title: judul.trim(), slug,
-        excerpt: ringkasanFinal, content: isi,
-        cover_url: sampul.trim(), content_type: jenis,
+        excerpt: ringkasan.trim() || isi.trim().slice(0, 180),
+        content: isi, cover_url: sampul.trim(), content_type: jenis,
         category_id: kategori || null,
-        fiction_format: jenis === "FICTION" ? formatFiksi : null,
-        status: "DRAFT", reading_time: waktuBaca,
+        fiction_format: jenis === "FICTION" ? "short" : null,
+        status: "DRAFT", reading_time: Math.max(1, Math.round(jumlahKata / 200)),
       })
-      .select("id")
-      .single();
+      .select("id").single();
 
-    if (error || !baru) {
-      setGalat("Gagal menyimpan: " + (error?.message ?? "tidak diketahui"));
-      setProses(false); return;
-    }
+    if (error || !baru) { setGalat("Gagal menyimpan: " + (error?.message ?? "??")); setProses(false); return; }
 
     if (jenis === "ACADEMIC") {
       await supabase.from("academic_metadata").insert({
@@ -120,107 +101,106 @@ export default function HalamanTulis() {
     }
 
     if (kirim) {
-      const { error: eSub } = await supabase
-        .from("works").update({ status: "SUBMITTED" }).eq("id", baru.id);
+      const { error: eSub } = await supabase.from("works").update({ status: "SUBMITTED" }).eq("id", baru.id);
       if (eSub) { setGalat("Tersimpan sebagai draft, tapi gagal mengirim: " + eSub.message); setProses(false); return; }
     }
-
     router.push("/dasbor/karya");
   }
 
   return (
-    <main style={{ maxWidth: 720, margin: "0 auto", padding: 40, fontFamily: "Georgia, serif" }}>
-      <Link href="/dasbor" style={{ color: "#0B7A3E", textDecoration: "none" }}>← Dasbor</Link>
-      <h1 style={{ fontSize: 30, margin: "10px 0 20px" }}>Tulis Karya</h1>
-      {galat && <p style={{ color: "#B3261E", background: "#FBEAEA", padding: 10, borderRadius: 4 }}>{galat}</p>}
+    <>
+      <HeaderDalam judul="Tulis Karya" aksi={<Link href="/dasbor" className="btn">← Dasbor</Link>} />
+      <main className="container-mb narrow" style={{ padding: "24px 24px 80px" }}>
+        {galat && <p style={{ color: "var(--err)", border: "1px solid var(--err)", background: "var(--paper2)", padding: "12px 16px", borderRadius: 4, marginBottom: 16 }}>{galat}</p>}
 
-      <div style={{ display: "grid", gap: 16 }}>
-        <div>
-          <label htmlFor="judul" style={labGaya}>Judul</label>
-          <input id="judul" style={inGaya} value={judul} onChange={e => setJudul(e.target.value)} placeholder="Judul karya…" />
-        </div>
+        <input
+          value={judul}
+          onChange={e => setJudul(e.target.value)}
+          placeholder="Judul karya…"
+          style={{ width: "100%", fontSize: "clamp(1.5rem, 4vw, 2.2rem)", fontFamily: "var(--fd)", fontWeight: 600, padding: "8px 0", border: "none", borderBottom: "2px solid var(--rule2)", background: "transparent", color: "var(--ink)", outline: "none" }}
+        />
+        <p className="meta" style={{ margin: "8px 0 20px" }}>
+          /karya/{slugify(judul) || "otomatis-dari-judul"}
+        </p>
 
-        <div>
-          <label htmlFor="jenis" style={labGaya}>Jenis karya</label>
-          <select id="jenis" style={inGaya} value={jenis} onChange={e => setJenis(e.target.value)}>
-            {JENIS.map(j => <option key={j.id} value={j.id}>{j.label}</option>)}
-          </select>
-        </div>
-
-        {jenis === "FICTION" && (
-          <div>
-            <label htmlFor="fiksi" style={labGaya}>Format fiksi</label>
-            <select id="fiksi" style={inGaya} value={formatFiksi} onChange={e => setFormatFiksi(e.target.value)}>
-              {FIKSI.map(f => <option key={f.id} value={f.id}>{f.label}</option>)}
-            </select>
-            <small style={{ color: "#888" }}>Fitur bab-per-bab untuk novel menyusul di sesi berikutnya.</small>
+        <div style={{ display: "grid", gap: 16 }}>
+          <div className="field">
+            <label>Jenis Karya</label>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+              {JENIS.map(j => (
+                <button key={j.id} type="button" onClick={() => setJenis(j.id)}
+                  className={`btn ${jenis === j.id ? "btn-primary" : ""}`} style={{ padding: "9px 14px", fontSize: 10 }}>
+                  {j.label}
+                </button>
+              ))}
+            </div>
           </div>
-        )}
 
-        <div>
-          <label htmlFor="kategori" style={labGaya}>Kategori</label>
-          <select id="kategori" style={inGaya} value={kategori} onChange={e => setKategori(e.target.value)}>
-            <option value="">— pilih kategori —</option>
-            {induk.map(p => (
-              <optgroup key={p.id} label={p.name}>
-                {daftarKategori.filter(k => k.parent_id === p.id).map(k => (
-                  <option key={k.id} value={k.id}>{k.name}</option>
-                ))}
-              </optgroup>
-            ))}
-          </select>
-        </div>
+          <div className="field">
+            <label htmlFor="kategori">Kategori</label>
+            <select id="kategori" className="input" value={kategori} onChange={e => setKategori(e.target.value)}>
+              <option value="">— pilih kategori —</option>
+              {induk.map(p => (
+                <optgroup key={p.id} label={p.name}>
+                  {daftarKategori.filter(k => k.parent_id === p.id).map(k => (
+                    <option key={k.id} value={k.id}>{k.name}</option>
+                  ))}
+                </optgroup>
+              ))}
+            </select>
+          </div>
 
-        {jenis === "ACADEMIC" && (
-          <>
-            <div>
-              <label htmlFor="abstrak" style={labGaya}>Abstrak</label>
-              <textarea id="abstrak" style={{ ...inGaya, minHeight: 120 }} value={abstrak} onChange={e => setAbstrak(e.target.value)} />
+          {jenis === "ACADEMIC" && (
+            <>
+              <div className="field">
+                <label htmlFor="abstrak">Abstrak</label>
+                <textarea id="abstrak" className="input" style={{ minHeight: 110 }} value={abstrak} onChange={e => setAbstrak(e.target.value)} />
+              </div>
+              <div className="field">
+                <label htmlFor="kw">Kata kunci (koma)</label>
+                <input id="kw" className="input" value={kataKunci} onChange={e => setKataKunci(e.target.value)} placeholder="Filsafat, Pendidikan" />
+              </div>
+            </>
+          )}
+
+          <div className="field">
+            <label htmlFor="isi">Isi Karya</label>
+            <textarea id="isi" className="input" style={{ minHeight: 340, fontSize: 17, lineHeight: 1.85, fontFamily: "var(--fb)" }} value={isi}
+              onChange={e => setIsi(e.target.value)} placeholder="Tulis di sini… (mendukung HTML sederhana: <p>, <h2>, <blockquote>, <em>)" />
+            <p className="meta" style={{ textAlign: "right", marginTop: 6 }}>
+              {jumlahKata} kata · ±{Math.max(1, Math.round(jumlahKata / 200))} menit baca
+            </p>
+          </div>
+
+          <div className="field">
+            <label htmlFor="ringkasan">Ringkasan (opsional)</label>
+            <textarea id="ringkasan" className="input" style={{ minHeight: 70 }} value={ringkasan} onChange={e => setRingkasan(e.target.value)} />
+          </div>
+
+          <div className="field">
+            <label htmlFor="tag">Tag (koma)</label>
+            <input id="tag" className="input" value={tagStr} onChange={e => setTagStr(e.target.value)} placeholder="Esai, Kota, Hujan" />
+          </div>
+
+          <div className="field">
+            <label htmlFor="sampul">URL Sampul (opsional)</label>
+            <div style={{ display: "flex", gap: 8 }}>
+              <input id="sampul" className="input" value={sampul} onChange={e => setSampul(e.target.value)} placeholder="https://…" />
+              <button type="button" onClick={() => setSampul(`https://picsum.photos/seed/mb${Math.floor(Math.random() * 99999)}/1200/520`)}
+                className="btn" style={{ whiteSpace: "nowrap" }}>↺ Acak</button>
             </div>
-            <div>
-              <label htmlFor="kw" style={labGaya}>Kata kunci (pisahkan koma)</label>
-              <input id="kw" style={inGaya} value={kataKunci} onChange={e => setKataKunci(e.target.value)} placeholder="Filsafat, Pendidikan" />
-            </div>
-          </>
-        )}
+          </div>
 
-        <div>
-          <label htmlFor="isi" style={labGaya}>Isi karya</label>
-          <textarea id="isi" style={{ ...inGaya, minHeight: 320, fontFamily: "Georgia, serif", lineHeight: 1.8 }} value={isi}
-            onChange={e => setIsi(e.target.value)} placeholder="Tulis di sini…" />
-          <small style={{ color: "#888" }}>{jumlahKata} kata · ±{Math.max(1, Math.round(jumlahKata / 200))} menit baca</small>
+          <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
+            <button onClick={() => simpan(false)} disabled={proses} className="btn" style={{ flex: 1, justifyContent: "center" }}>
+              Simpan Draft
+            </button>
+            <button onClick={() => simpan(true)} disabled={proses} className="btn btn-acc" style={{ flex: 1, justifyContent: "center" }}>
+              {proses ? "Memproses…" : "Kirim untuk Review"}
+            </button>
+          </div>
         </div>
-
-        <div>
-          <label htmlFor="ringkasan" style={labGaya}>Ringkasan (opsional — otomatis dari isi bila kosong)</label>
-          <textarea id="ringkasan" style={{ ...inGaya, minHeight: 80 }} value={ringkasan} onChange={e => setRingkasan(e.target.value)} />
-        </div>
-
-        <div>
-          <label htmlFor="tag" style={labGaya}>Tag (pisahkan koma)</label>
-          <input id="tag" style={inGaya} value={tagStr} onChange={e => setTagStr(e.target.value)} placeholder="Esai, Kota, Hujan" />
-        </div>
-
-        <div>
-          <label htmlFor="sampul" style={labGaya}>URL gambar sampul (opsional)</label>
-          <input id="sampul" style={inGaya} value={sampul} onChange={e => setSampul(e.target.value)} placeholder="https://…" />
-          <button type="button" onClick={() => setSampul(`https://picsum.photos/seed/mb${Math.floor(Math.random() * 99999)}/1200/520`)}
-            style={{ marginTop: 8, padding: 8, background: "none", border: "1px dashed #C7D2C7", borderRadius: 4, cursor: "pointer", color: "#2C372C" }}>
-            ↺ Pakai sampul acak
-          </button>
-        </div>
-
-        <div style={{ display: "flex", gap: 10, marginTop: 10 }}>
-          <button onClick={() => simpan(false)} disabled={proses}
-            style={{ flex: 1, padding: 14, border: "1px solid #0D120D", background: "#fff", color: "#0D120D", borderRadius: 4, fontSize: 15, cursor: "pointer" }}>
-            Simpan Draft
-          </button>
-          <button onClick={() => simpan(true)} disabled={proses}
-            style={{ flex: 1, padding: 14, background: "#0B7A3E", color: "#fff", border: "none", borderRadius: 4, fontSize: 15, cursor: "pointer" }}>
-            {proses ? "Memproses…" : "Kirim untuk Review"}
-          </button>
-        </div>
-      </div>
-    </main>
+      </main>
+    </>
   );
 }

@@ -4,12 +4,14 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { getSupabaseBrowserClient } from "@/lib/supabase";
+import { HeaderDalam, BadgePeran } from "@/components/AppShell";
 
 export default function Dasbor() {
   const router = useRouter();
   const supabase = getSupabaseBrowserClient();
   const [profil, setProfil] = useState<{ full_name: string; username: string } | null>(null);
   const [peran, setPeran] = useState("");
+  const [stat, setStat] = useState({ total: 0, draft: 0, terbit: 0, review: 0 });
   const [memuat, setMemuat] = useState(true);
 
   useEffect(() => {
@@ -24,8 +26,17 @@ export default function Dasbor() {
       }
       const { data: ur } = await supabase
         .from("user_roles").select("role_id").eq("user_id", user.id);
-      const daftar = (ur ?? []).map((r: any) => r.role_id);
-      setPeran(daftar.join(" · ") || "READER");
+      setPeran((ur ?? []).map((r: any) => r.role_id).join(" · ") || "READER");
+
+      const { data: k } = await supabase
+        .from("works").select("status").eq("author_id", user.id);
+      const semua = k ?? [];
+      setStat({
+        total: semua.length,
+        draft: semua.filter((x: any) => x.status === "DRAFT").length,
+        terbit: semua.filter((x: any) => x.status === "PUBLISHED").length,
+        review: semua.filter((x: any) => ["SUBMITTED", "IN_REVIEW", "REVISION_REQUIRED"].includes(x.status)).length,
+      });
       setMemuat(false);
     })();
   }, [router, supabase]);
@@ -36,25 +47,49 @@ export default function Dasbor() {
   }
 
   if (memuat) {
-    return <main style={{ maxWidth: 640, margin: "0 auto", padding: 40, fontFamily: "Georgia, serif" }}><p>Memuat…</p></main>;
+    return <main className="container-mb"><p style={{ padding: 60, color: "var(--mut)" }}>Memuat…</p></main>;
   }
 
+  const kartu = [
+    { label: "Total Karya", nilai: stat.total, href: "/dasbor/karya" },
+    { label: "Draft", nilai: stat.draft, href: "/dasbor/karya" },
+    { label: "Dalam Review", nilai: stat.review, href: "/dasbor/karya" },
+    { label: "Terbit", nilai: stat.terbit, href: "/dasbor/karya" },
+  ];
+
   return (
-    <main style={{ maxWidth: 640, margin: "0 auto", padding: 40, fontFamily: "Georgia, serif" }}>
-      <h1 style={{ fontSize: 30 }}>Dasbor Penulis</h1>
-      <p style={{ fontSize: 18 }}>Halo, <b>{profil?.full_name ?? "Penulis"}</b> <span style={{ color: "#888" }}>(@{profil?.username})</span></p>
-      <p>Peran akun: <b style={{ color: "#0B7A3E" }}>{peran}</b></p>
-      <div style={{ display: "flex", gap: 10, marginTop: 24, flexWrap: "wrap" }}>
-        <Link href="/dasbor/tulis" style={{ padding: 14, background: "#0B7A3E", color: "#fff", borderRadius: 4, textDecoration: "none" }}>✍️ Tulis Karya</Link>
-        <Link href="/dasbor/karya" style={{ padding: 14, border: "1px solid #C7D2C7", borderRadius: 4, textDecoration: "none", color: "#0D120D" }}>📚 Karya Saya</Link>
-        <Link href="/" style={{ padding: 14, border: "1px solid #C7D2C7", borderRadius: 4, textDecoration: "none", color: "#0D120D" }}>← Beranda</Link>
-        <button onClick={keluar} style={{ padding: 14, background: "#0D120D", color: "#fff", border: "none", borderRadius: 4, cursor: "pointer" }}>Keluar</button>
-      </div>
-      {(peran.includes("EDITOR") || peran.includes("ADMIN")) && (
-        <p style={{ marginTop: 20 }}>
-          <Link href="/editor" style={{ color: "#0B7A3E" }}>🗂️ Buka Meja Editor →</Link>
-        </p>
-      )}
-    </main>
+    <>
+      <HeaderDalam judul="Dasbor Penulis" aksi={
+        <button onClick={keluar} className="btn">Keluar</button>
+      } />
+      <main className="container-mb narrow" style={{ padding: "24px 24px 80px" }}>
+        <h1 style={{ fontSize: "clamp(1.8rem, 4vw, 2.6rem)", margin: "8px 0 6px" }}>
+          Halo, {profil?.full_name ?? "Penulis"} 👋
+        </h1>
+        <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap", marginBottom: 8 }}>
+          <span className="meta">@{profil?.username}</span>
+          <BadgePeran peran={peran} />
+        </div>
+
+        <div className="stat-strip">
+          {kartu.map(k => (
+            <Link key={k.label} href={k.href} className="stat-box" style={{ textDecoration: "none" }}>
+              <div className="stat-n">{k.nilai}</div>
+              <div className="stat-l">{k.label}</div>
+            </Link>
+          ))}
+        </div>
+
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 20 }}>
+          <Link href="/dasbor/tulis" className="btn btn-acc">✍️ Tulis Karya</Link>
+          <Link href="/dasbor/karya" className="btn">📚 Karya Saya</Link>
+          <Link href="/dasbor/profil" className="btn">👤 Profil</Link>
+          <Link href={`/penulis/${profil?.username ?? ""}`} className="btn">🌍 Profil Publik</Link>
+          {(peran.includes("EDITOR") || peran.includes("ADMIN")) && (
+            <Link href="/editor" className="btn btn-primary">🗂️ Meja Editor</Link>
+          )}
+        </div>
+      </main>
+    </>
   );
 }
