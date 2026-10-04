@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createServerClient } from "@supabase/ssr";
+import { TemaToggle } from "@/components/TemaToggle";
 
 export const dynamic = "force-dynamic";
 
@@ -11,7 +12,7 @@ async function ambilData() {
   );
   const { data } = await supabase
     .from("works")
-    .select("id, title, slug, excerpt, status, published_at, reading_time, profiles(full_name, username)")
+    .select("id, title, slug, excerpt, published_at, reading_time, profiles(full_name, username)")
     .eq("status", "PUBLISHED");
   return data ?? [];
 }
@@ -24,10 +25,14 @@ export default async function Home() {
       <header className="site-header">
         <div className="site-header-in">
           <span className="site-brand">Media<em>Baca</em></span>
-          <nav className="site-nav">
-            <Link href="/daftar">Daftar</Link>
-            <Link href="/masuk">Masuk</Link>
-          </nav>
+          <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+            <nav className="site-nav">
+              <Link href="/jelajahi">Jelajahi</Link>
+              <Link href="/daftar">Daftar</Link>
+              <Link href="/masuk">Masuk</Link>
+            </nav>
+            <TemaToggle />
+          </div>
         </div>
       </header>
 
@@ -47,9 +52,7 @@ export default async function Home() {
         <div className="kicker" id="karya"><span className="idx">01</span> KARYA TERBIT ({works.length}) <span className="krule"></span></div>
 
         {works.length === 0 ? (
-          <p style={{ color: "var(--mut)", padding: "28px 0" }}>
-            Belum ada karya terbit — jadilah penulis pertama!
-          </p>
+          <p style={{ color: "var(--mut)", padding: "28px 0" }}>Belum ada karya terbit — jadilah penulis pertama!</p>
         ) : (
           <ul className="work-list" style={{ marginTop: 20 }}>
             {works.map((w: any) => (

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { TemaToggle } from "@/components/TemaToggle";
 
 export function HeaderDalam({ judul, aksi }: { judul?: string; aksi?: React.ReactNode }) {
   return (
@@ -8,11 +9,14 @@ export function HeaderDalam({ judul, aksi }: { judul?: string; aksi?: React.Reac
       <header className="site-header">
         <div className="site-header-in">
           <Link href="/" className="site-brand">Media<em>Baca</em></Link>
-          <nav className="site-nav">
-            <Link href="/dasbor">Dasbor</Link>
-            <Link href="/dasbor/tulis">Tulis</Link>
-            <Link href="/dasbor/karya">Karya</Link>
-          </nav>
+          <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+            <nav className="site-nav">
+              <Link href="/dasbor">Dasbor</Link>
+              <Link href="/dasbor/tulis">Tulis</Link>
+              <Link href="/dasbor/karya">Karya</Link>
+            </nav>
+            <TemaToggle />
+          </div>
         </div>
       </header>
       {(judul || aksi) && (
