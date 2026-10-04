@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createServerClient } from "@supabase/ssr";
+import { LaporkanProfil } from "@/components/LaporkanProfil";
 
 export const dynamic = "force-dynamic";
 
@@ -32,7 +33,7 @@ export default async function ProfilPenulis({ params }: { params: Promise<{ user
 
   const { data: karya } = await supabase
     .from("works")
-    .select("id, title, slug, excerpt, reading_time, views_count, published_at")
+    .select("id, title, slug, excerpt, cover_url, reading_time, views_count, published_at")
     .eq("author_id", penulis.id)
     .eq("status", "PUBLISHED")
     .order("published_at", { ascending: false });
@@ -44,7 +45,7 @@ export default async function ProfilPenulis({ params }: { params: Promise<{ user
   const { count: suka } = await supabase
     .from("likes").select("id", { count: "exact", head: true })
     .in("work_id", semua.map((k: any) => k.id));
-  const totalViews = semua.reduce((s: number, k: any) => s + (k.views_count ?? 0), 0);
+  const totalViews = semua.reduce((s: any, k: any) => s + (k.views_count ?? 0), 0);
 
   return (
     <>
@@ -83,11 +84,17 @@ export default async function ProfilPenulis({ params }: { params: Promise<{ user
           </div>
 
           {penulis.bio && <p style={{ fontSize: 17, color: "var(--ink2)", lineHeight: 1.7, marginBottom: 8 }}>{penulis.bio}</p>}
-          {penulis.joined_at && (
-            <p className="meta" style={{ marginBottom: 28 }}>
-              Bergabung {new Date(penulis.joined_at).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}
-            </p>
-          )}
+
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
+            {penulis.joined_at && (
+              <p className="meta" style={{ marginBottom: 28 }}>
+                Bergabung {new Date(penulis.joined_at).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}
+              </p>
+            )}
+            <div style={{ marginBottom: 28 }}>
+              <LaporkanProfil targetId={penulis.id} />
+            </div>
+          </div>
 
           <div className="kicker"><span className="idx">01</span> KARYA TERBIT ({semua.length}) <span className="krule"></span></div>
 
@@ -97,12 +104,19 @@ export default async function ProfilPenulis({ params }: { params: Promise<{ user
             <ul className="work-list" style={{ marginTop: 16 }}>
               {semua.map((k: any) => (
                 <li key={k.id}>
-                  <Link href={`/karya/${k.slug}`} className="work-item">
-                    <div className="work-title">{k.title}</div>
-                    {k.excerpt && <p className="work-excerpt">{k.excerpt}</p>}
-                    <div className="work-meta">
-                      {k.published_at ? new Date(k.published_at).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }) : "—"}
-                      {" · "}{k.reading_time} mnt baca{" · "}{(k.views_count ?? 0).toLocaleString("id-ID")} pembaca
+                  <Link href={`/karya/${k.slug}`} className="work-item" style={{ display: "flex", gap: 18, alignItems: "flex-start" }}>
+                    {k.cover_url && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={k.cover_url} alt="" loading="lazy"
+                        style={{ width: 120, height: 84, objectFit: "cover", borderRadius: 2, border: "1px solid var(--rule)", flexShrink: 0 }} />
+                    )}
+                    <div style={{ minWidth: 0 }}>
+                      <div className="work-title">{k.title}</div>
+                      {k.excerpt && <p className="work-excerpt">{k.excerpt}</p>}
+                      <div className="work-meta">
+                        {k.published_at ? new Date(k.published_at).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }) : "—"}
+                        {" · "}{k.reading_time} mnt baca{" · "}{(k.views_count ?? 0).toLocaleString("id-ID")} pembaca
+                      </div>
                     </div>
                   </Link>
                 </li>

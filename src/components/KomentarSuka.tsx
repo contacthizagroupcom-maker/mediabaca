@@ -24,6 +24,14 @@ export function SukaDanKomentar({ workId, authorId, authorName, authorUsername }
   const [sibuk, setSibuk] = useState(false);
   const [pesan, setPesan] = useState("");
 
+  async function ambilNama(): Promise<string> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return "Seseorang";
+    const { data: pr } = await supabase
+      .from("profiles").select("full_name").eq("id", user.id).maybeSingle();
+    return pr?.full_name ?? "Seseorang";
+  }
+
   async function muat() {
     const { data: { user } } = await supabase.auth.getUser();
     setMasuk(!!user);
@@ -69,7 +77,7 @@ export function SukaDanKomentar({ workId, authorId, authorName, authorUsername }
       setSuka(s => s + 1); setSayaSuka(true);
       await supabase.from("notifications").insert({
         user_id: authorId, type: "like",
-        message: "Seseorang menyukai karya Anda",
+        message: (await ambilNama()) + " menyukai karya Anda",
         reference_id: workId,
       });
     }
@@ -87,7 +95,7 @@ export function SukaDanKomentar({ workId, authorId, authorName, authorUsername }
       setPengikut(p => p + 1); setIkut(true);
       await supabase.from("notifications").insert({
         user_id: authorId, type: "follow",
-        message: "Seseorang mulai mengikuti Anda",
+        message: (await ambilNama()) + " mulai mengikuti Anda",
         reference_id: null,
       });
     }
@@ -102,7 +110,7 @@ export function SukaDanKomentar({ workId, authorId, authorName, authorUsername }
     await supabase.from("comments").insert({ work_id: workId, user_id: userId!, content: isi.trim() });
     await supabase.from("notifications").insert({
       user_id: authorId, type: "comment",
-      message: "Seseorang mengomentari karya Anda",
+      message: (await ambilNama()) + " mengomentari karya Anda",
       reference_id: workId,
     });
     setIsi(""); setPesan("");
@@ -157,16 +165,16 @@ export function SukaDanKomentar({ workId, authorId, authorName, authorUsername }
         ) : (
           komen.map(k => (
             <div key={k.id} style={{ borderTop: "1px solid var(--rule)", padding: "16px 0" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap", alignItems: "baseline" }}>
                 <Link href={`/penulis/${k.profiles?.username ?? ""}`} style={{ fontFamily: "var(--fd)", fontWeight: 600 }}>
                   {k.profiles?.full_name ?? "Pembaca"}
                 </Link>
-                <span className="meta">
+                <span className="meta" style={{ display: "inline-flex", gap: 10, alignItems: "center" }}>
                   {new Date(k.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}
-                  {k.profiles?.username === undefined && ""}
-                  {userId && k.profiles?.username && (
-                    <button onClick={() => hapusKomentar(k.id)} style={{ marginLeft: 10, background: "none", border: "none", color: "var(--mut)", cursor: "pointer", fontSize: 10, fontFamily: "var(--fm)", textTransform: "uppercase" }}>Hapus</button>
+                  {userId && (
+                    <button onClick={() => hapusKomentar(k.id)} style={{ background: "none", border: "none", color: "var(--mut)", cursor: "pointer", fontSize: 10, fontFamily: "var(--fm)", textTransform: "uppercase" }}>Hapus</button>
                   )}
+                  <TombolLaporKecil targetId={k.id} />
                 </span>
               </div>
               <p style={{ margin: "6px 0 0", fontSize: 16 }}>{k.content}</p>
@@ -175,5 +183,25 @@ export function SukaDanKomentar({ workId, authorId, authorName, authorUsername }
         )}
       </div>
     </section>
+  );
+}
+
+function TombolLaporKecil({ targetId }: { targetId: string }) {
+  const supabase = getSupabaseBrowserClient();
+  const [ok, setOk] = useState(false);
+  async function lapor() {
+    if (!confirm("Laporkan komentar ini ke moderator?")) return;
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return void (window.location.href = "/masuk");
+    await supabase.from("reports").insert({
+      reporter_id: user.id, target_type: "comment", target_id: targetId, reason: "Lainnya",
+    });
+    setOk(true);
+    setTimeout(() => setOk(false), 2500);
+  }
+  return (
+    <button onClick={lapor} style={{ background: "none", border: "none", cursor: "pointer", color: ok ? "var(--acc)" : "var(--mut)", fontFamily: "var(--fm)", fontSize: 9, letterSpacing: ".1em", textTransform: "uppercase" }}>
+      {ok ? "✓ Terlapor" : "🚩 Lapor"}
+    </button>
   );
 }

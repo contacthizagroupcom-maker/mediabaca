@@ -1,7 +1,43 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { TemaToggle } from "@/components/TemaToggle";
+import { getSupabaseBrowserClient } from "@/lib/supabase";
+
+function Lonceng() {
+  const supabase = getSupabaseBrowserClient();
+  const [jumlah, setJumlah] = useState(0);
+
+  useEffect(() => {
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { count } = await supabase
+        .from("notifications").select("id", { count: "exact", head: true })
+        .eq("user_id", user.id).eq("is_read", false);
+      setJumlah(count ?? 0);
+    })();
+  }, [supabase]);
+
+  return (
+    <Link href="/notifikasi" aria-label="Notifikasi" style={{
+      position: "relative", display: "inline-flex", alignItems: "center",
+      color: "rgba(255,255,255,.85)", textDecoration: "none", fontSize: 17,
+    }}>
+      🔔
+      {jumlah > 0 && (
+        <span style={{
+          position: "absolute", top: -6, right: -10,
+          background: "#2FB35C", color: "#fff", fontSize: 10,
+          minWidth: 16, height: 16, borderRadius: 99,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          fontFamily: "var(--fm)", padding: "0 4px",
+        }}>{jumlah > 9 ? "9+" : jumlah}</span>
+      )}
+    </Link>
+  );
+}
 
 export function HeaderDalam({ judul, aksi }: { judul?: string; aksi?: React.ReactNode }) {
   return (
@@ -15,6 +51,7 @@ export function HeaderDalam({ judul, aksi }: { judul?: string; aksi?: React.Reac
               <Link href="/dasbor/tulis">Tulis</Link>
               <Link href="/dasbor/karya">Karya</Link>
             </nav>
+            <Lonceng />
             <TemaToggle />
           </div>
         </div>
