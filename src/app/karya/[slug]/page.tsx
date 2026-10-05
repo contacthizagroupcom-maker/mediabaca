@@ -4,6 +4,7 @@ import { createServerClient } from "@supabase/ssr";
 import { SukaDanKomentar } from "@/components/KomentarSuka";
 import { TombolBagikan } from "@/components/TombolBagikan";
 import { TombolLaporkan } from "@/components/Laporkan";
+import { CatatView } from "@/components/CatatView";
 
 export const dynamic = "force-dynamic";
 
@@ -129,6 +130,8 @@ export default async function HalamanKarya({ params }: { params: Promise<{ slug:
           authorUsername={penulis?.username ?? ""}
         />
       </main>
+
+      <CatatView workId={karya.id} />
 
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
     </>

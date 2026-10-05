@@ -22,7 +22,7 @@ const KELAS: Record<string, string> = {
 export default function Admin() {
   const router = useRouter();
   const supabase = getSupabaseBrowserClient();
-  const [tab, setTab] = useState<"ringkasan" | "pengguna" | "karya" | "laporan">("ringkasan");
+  const [tab, setTab] = useState<"ringkasan" | "pengguna" | "karya" | "laporan" | "komentar">("ringkasan");
   const [bukanAdmin, setBukanAdmin] = useState(false);
   const [memuat, setMemuat] = useState(true);
   const [sibuk, setSibuk] = useState(false);
@@ -31,6 +31,7 @@ export default function Admin() {
   const [pengguna, setPengguna] = useState<(Profil & { peran: string })[]>([]);
   const [karya, setKarya] = useState<Karya[]>([]);
   const [laporan, setLaporan] = useState<Laporan[]>([]);
+  const [komentarModerasi, setKomentarModerasi] = useState<{ id: string; content: string; status: string; profiles: { full_name: string } | null }[]>([]);
 
   async function muatSemua() {
     const { data: { user } } = await supabase.auth.getUser();
@@ -69,6 +70,14 @@ export default function Admin() {
       .from("reports").select("id, target_type, reason, status, created_at").order("created_at", { ascending: false });
     setLaporan((lr as any) ?? []);
 
+    const { data: km } = await supabase
+      .from("comments")
+      .select("id, content, status, profiles(full_name)")
+      .neq("status", "DELETED")
+      .order("created_at", { ascending: false })
+      .limit(30);
+    setKomentarModerasi((km as any) ?? []);
+
     setMemuat(false);
   }
 
@@ -87,6 +96,21 @@ export default function Admin() {
     if (!confirm("Hapus karya ini permanen?")) return;
     setSibuk(true);
     await supabase.from("works").delete().eq("id", id);
+    await muatSemua();
+    setSibuk(false);
+  }
+
+  async function sembunyikanKomentar(id: string) {
+    if (!confirm("Sembunyikan komentar ini dari publik?")) return;
+    setSibuk(true);
+    await supabase.from("comments").update({ status: "HIDDEN" }).eq("id", id);
+    await muatSemua();
+    setSibuk(false);
+  }
+
+  async function tampilkanKomentar(id: string) {
+    setSibuk(true);
+    await supabase.from("comments").update({ status: "VISIBLE" }).eq("id", id);
     await muatSemua();
     setSibuk(false);
   }
@@ -120,6 +144,7 @@ export default function Admin() {
     { id: "pengguna", label: "Pengguna" },
     { id: "karya", label: "Karya" },
     { id: "laporan", label: "Laporan" },
+    { id: "komentar", label: "Komentar" },
   ] as const;
 
   return (
@@ -240,6 +265,43 @@ export default function Admin() {
                       <button onClick={() => selesaikanLaporan(l.id)} disabled={sibuk} className="btn btn-acc" style={{ padding: "8px 14px", fontSize: 10 }}>✓ Tandai Selesai</button>
                     ) : (
                       <span className="badge badge-published">Selesai</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+
+        {tab === "komentar" && (
+          <>
+            <div className="kicker"><span className="idx">02</span> MODERASI KOMENTAR ({komentarModerasi.length}) <span className="krule"></span></div>
+            <p className="meta" style={{ textTransform: "none", fontSize: 12, margin: "8px 0 16px" }}>
+              Sembunyikan komentar yang melanggar — penulisnya tetap bisa melihat miliknya, publik tidak.
+            </p>
+            {komentarModerasi.length === 0 ? (
+              <div style={{ border: "1px dashed var(--rule2)", padding: "40px 20px", textAlign: "center", borderRadius: 4 }}>
+                <p style={{ color: "var(--mut)" }}>Tidak ada komentar aktif. 🎉</p>
+              </div>
+            ) : (
+              <div style={{ marginTop: 12 }}>
+                {komentarModerasi.map(k => (
+                  <div key={k.id} style={{ borderTop: "1px solid var(--rule)", padding: "14px 0" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap", alignItems: "baseline" }}>
+                      <b style={{ fontFamily: "var(--fd)", fontSize: 15 }}>{k.profiles?.full_name ?? "Pengguna"}</b>
+                      <span className={`badge ${k.status === "HIDDEN" ? "badge-revision" : "badge-draft"}`}>
+                        {k.status === "HIDDEN" ? "Disembunyikan" : "Tampil"}
+                      </span>
+                    </div>
+                    <p style={{ margin: "6px 0", fontSize: 15, color: "var(--ink2)" }}>{k.content}</p>
+                    {k.status === "VISIBLE" ? (
+                      <button onClick={() => sembunyikanKomentar(k.id)} disabled={sibuk} className="btn" style={{ padding: "6px 12px", fontSize: 10, borderColor: "var(--err)", color: "var(--err)" }}>
+                        🚫 Sembunyikan
+                      </button>
+                    ) : (
+                      <button onClick={() => tampilkanKomentar(k.id)} disabled={sibuk} className="btn btn-acc" style={{ padding: "6px 12px", fontSize: 10 }}>
+                        ✓ Tampilkan Ulang
+                      </button>
                     )}
                   </div>
                 ))}

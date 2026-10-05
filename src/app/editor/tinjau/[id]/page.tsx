@@ -21,6 +21,7 @@ export default function TinjauKarya() {
   const [memuat, setMemuat] = useState(true);
   const [sibuk, setSibuk] = useState(false);
   const [galat, setGalat] = useState("");
+  const [babs, setBabs] = useState<{ chapter_number: number; title: string; content: string }[]>([]);
 
   useEffect(() => {
     (async () => {
@@ -31,6 +32,12 @@ export default function TinjauKarya() {
         .select("id, title, slug, excerpt, content, status, author_id, profiles(full_name, username)")
         .eq("id", params.id).maybeSingle();
       setKarya(data ?? null);
+      if (data) {
+        const { data: chs } = await supabase
+          .from("chapters").select("chapter_number, title, content")
+          .eq("work_id", data.id).order("chapter_number", { ascending: true });
+        setBabs((chs as any) ?? []);
+      }
       setMemuat(false);
     })();
   }, [params.id, router, supabase]);
@@ -86,6 +93,20 @@ export default function TinjauKarya() {
 
         <div style={{ borderTop: "2px solid var(--ink)", margin: "12px 0 24px" }} />
         <article className="prose-mb" dangerouslySetInnerHTML={{ __html: karya.content }} />
+
+        {babs.length > 0 && (
+          <div style={{ marginTop: 32 }}>
+            <div className="kicker"><span className="idx">Ch</span> {babs.length} BAB — RINGKASAN TIAP BAB <span className="krule"></span></div>
+            {babs.map(b => (
+              <details key={b.chapter_number} style={{ border: "1px solid var(--rule2)", borderRadius: 4, marginTop: 10, background: "var(--paper2)" }}>
+                <summary style={{ padding: "12px 16px", cursor: "pointer", fontFamily: "var(--fd)", fontWeight: 600 }}>
+                  Bab {b.chapter_number}: {b.title || "(tanpa judul)"}
+                </summary>
+                <div className="prose-mb" style={{ padding: "0 16px 16px", fontSize: 16 }} dangerouslySetInnerHTML={{ __html: b.content }} />
+              </details>
+            ))}
+          </div>
+        )}
         <div style={{ borderTop: "1px solid var(--ink)", margin: "32px 0 24px" }} />
 
         <div className="kicker" style={{ marginBottom: 14 }}><span className="idx">!</span> KEPUTUSAN EDITORIAL <span className="krule"></span></div>
