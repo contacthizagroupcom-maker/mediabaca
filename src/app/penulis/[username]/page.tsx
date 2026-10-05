@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { HeaderPublik } from "@/components/HeaderPublik";
 import { createServerClient } from "@supabase/ssr";
 import { LaporkanProfil } from "@/components/LaporkanProfil";
 
@@ -77,11 +78,7 @@ export default async function ProfilPenulis({ params }: { params: Promise<{ user
 
   return (
     <>
-      <header className="site-header">
-        <div className="site-header-in">
-          <Link href="/" className="site-brand">Media<em>Baca</em></Link>
-        </div>
-      </header>
+      <HeaderPublik />
 
       <main style={{ fontFamily: "var(--fb)" }}>
         {penulis.cover_url ? (

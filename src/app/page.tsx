@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { HeaderPublik } from "@/components/HeaderPublik";
 import { createServerClient } from "@supabase/ssr";
 import { TemaToggle } from "@/components/TemaToggle";
 
@@ -22,20 +23,7 @@ export default async function Home() {
 
   return (
     <>
-      <header className="site-header">
-        <div className="site-header-in">
-          <span className="site-brand">Media<em>Baca</em></span>
-          <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
-            <nav className="site-nav">
-              <Link href="/search">🔍 Cari</Link>
-              <Link href="/jelajahi">Jelajahi</Link><Link href="/tentang">Tentang</Link>
-              <Link href="/daftar">Daftar</Link>
-              <Link href="/masuk">Masuk</Link>
-            </nav>
-            <TemaToggle />
-          </div>
-        </div>
-      </header>
+      <HeaderPublik aktif="beranda" />
 
       <main className="container-mb narrow" style={{ padding: "48px 24px 80px" }}>
         <div className="kicker"><span className="idx">MB</span> JURNAL DIGITAL MULTI-PENULIS <span className="krule"></span></div>

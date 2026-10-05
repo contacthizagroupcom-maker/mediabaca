@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { HeaderPublik } from "@/components/HeaderPublik";
 import { createServerClient } from "@supabase/ssr";
 import { SukaDanKomentar } from "@/components/KomentarSuka";
 import { TombolBagikan } from "@/components/TombolBagikan";
@@ -82,11 +83,7 @@ export default async function HalamanKarya({ params }: { params: Promise<{ slug:
 
   return (
     <>
-      <header className="site-header">
-        <div className="site-header-in">
-          <Link href="/" className="site-brand">Media<em>Baca</em></Link>
-        </div>
-      </header>
+      <HeaderPublik />
 
       <main className="container-mb narrow" style={{ padding: "44px 24px 80px" }}>
         <div className="kicker"><span className="idx">§</span> KARYA <span className="krule"></span></div>

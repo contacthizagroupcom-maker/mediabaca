@@ -1,18 +1,11 @@
 import Link from "next/link";
+import { HeaderPublik } from "@/components/HeaderPublik";
 import { TemaToggle } from "@/components/TemaToggle";
 
 export default function Tentang() {
   return (
     <>
-      <header className="site-header">
-        <div className="site-header-in">
-          <Link href="/" className="site-brand">Media<em>Baca</em></Link>
-          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-            <nav className="site-nav"><Link href="/">Beranda</Link><Link href="/jelajahi">Jelajahi</Link></nav>
-            <TemaToggle />
-          </div>
-        </div>
-      </header>
+      <HeaderPublik aktif="tentang" />
 
       <main className="container-mb narrow" style={{ padding: "48px 24px 80px", fontFamily: "var(--fb)" }}>
         <div className="kicker"><span className="idx">✦</span> TENTANG <span className="krule"></span></div>

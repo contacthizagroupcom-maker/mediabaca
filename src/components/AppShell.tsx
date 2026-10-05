@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { TemaToggle } from "@/components/TemaToggle";
 import { getSupabaseBrowserClient } from "@/lib/supabase";
 
@@ -11,42 +12,27 @@ function Lonceng() {
 
   useEffect(() => {
     let saluran: any = null;
-
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-
-      const muatJumlah = async () => {
+      const muat = async () => {
         const { count } = await supabase
           .from("notifications").select("id", { count: "exact", head: true })
           .eq("user_id", user.id).eq("is_read", false);
         setJumlah(count ?? 0);
       };
-      await muatJumlah();
-
-      // Berlangganan siaran real-time untuk tabel notifications
+      await muat();
       saluran = supabase
         .channel("notif-" + user.id)
         .on("postgres_changes",
           { event: "INSERT", schema: "public", table: "notifications" },
-          (payload: any) => {
-            if (payload?.new?.user_id === user.id) {
-              setJumlah(j => j + 1);
-            }
-          })
+          (payload: any) => { if (payload?.new?.user_id === user.id) setJumlah(j => j + 1); })
         .on("postgres_changes",
           { event: "UPDATE", schema: "public", table: "notifications" },
-          (payload: any) => {
-            if (payload?.new?.user_id === user.id && payload.new.is_read) {
-              setJumlah(j => Math.max(0, j - 1));
-            }
-          })
+          (payload: any) => { if (payload?.new?.user_id === user.id && payload.new.is_read) setJumlah(j => Math.max(0, j - 1)); })
         .subscribe();
     })();
-
-    return () => {
-      if (saluran) supabase.removeChannel(saluran);
-    };
+    return () => { if (saluran) supabase.removeChannel(saluran); };
   }, [supabase]);
 
   return (
@@ -68,18 +54,48 @@ function Lonceng() {
   );
 }
 
+function KotakCari() {
+  const router = useRouter();
+  const [kata, setKata] = useState("");
+
+  function cari(e: React.FormEvent) {
+    e.preventDefault();
+    if (kata.trim().length >= 2) router.push("/search?q=" + encodeURIComponent(kata.trim()));
+  }
+
+  return (
+    <form onSubmit={cari} style={{ display: "flex", gap: 6, flex: 1, maxWidth: 220 }}>
+      <input
+        value={kata}
+        onChange={e => setKata(e.target.value)}
+        placeholder="Cari…"
+        aria-label="Cari di MediaBaca"
+        style={{
+          width: "100%", padding: "6px 10px", fontSize: 13,
+          border: "1px solid rgba(255,255,255,.25)", borderRadius: 4,
+          background: "rgba(255,255,255,.08)", color: "#fff", outline: "none",
+          fontFamily: "var(--fb)",
+        }}
+      />
+    </form>
+  );
+}
+
 export function HeaderDalam({ judul, aksi }: { judul?: string; aksi?: React.ReactNode }) {
   return (
     <>
       <header className="site-header">
         <div className="site-header-in">
           <Link href="/" className="site-brand">Media<em>Baca</em></Link>
-          <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap", flex: 1, justifyContent: "flex-end" }}>
             <nav className="site-nav">
+              <Link href="/">Beranda</Link>
+              <Link href="/jelajahi">Jelajahi</Link>
               <Link href="/dasbor">Dasbor</Link>
               <Link href="/dasbor/tulis">Tulis</Link>
               <Link href="/dasbor/karya">Karya</Link>
             </nav>
+            <KotakCari />
             <Lonceng />
             <TemaToggle />
           </div>
