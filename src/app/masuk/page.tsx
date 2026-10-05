@@ -45,6 +45,9 @@ export default function HalamanMasuk() {
         </button>
       </form>
       <p style={{ marginTop: 20 }} className="meta">
+        Lupa kata sandi? <Link href="/lupa-sandi" style={{ color: "var(--acc)", textTransform: "none", fontSize: 13 }}>Kirim pemulihan</Link>
+      </p>
+      <p className="meta" style={{ marginTop: 8 }}>
         Belum punya akun? <Link href="/daftar" style={{ color: "var(--acc)", textTransform: "none", fontSize: 13 }}>Daftar →</Link>
       </p>
     </main>

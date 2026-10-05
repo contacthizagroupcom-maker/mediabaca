@@ -28,7 +28,7 @@ export default async function Home() {
           <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
             <nav className="site-nav">
               <Link href="/search">🔍 Cari</Link>
-              <Link href="/jelajahi">Jelajahi</Link>
+              <Link href="/jelajahi">Jelajahi</Link><Link href="/tentang">Tentang</Link>
               <Link href="/daftar">Daftar</Link>
               <Link href="/masuk">Masuk</Link>
             </nav>

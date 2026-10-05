@@ -5,6 +5,7 @@ import { SukaDanKomentar } from "@/components/KomentarSuka";
 import { TombolBagikan } from "@/components/TombolBagikan";
 import { TombolLaporkan } from "@/components/Laporkan";
 import { CatatView } from "@/components/CatatView";
+import { TombolBookmark } from "@/components/TombolBookmark";
 
 export const dynamic = "force-dynamic";
 
@@ -112,7 +113,10 @@ export default async function HalamanKarya({ params }: { params: Promise<{ slug:
           </span>
         </div>
 
-        <TombolBagikan judul={karya.title} ringkasan={karya.excerpt ?? undefined} />
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+          <TombolBagikan judul={karya.title} ringkasan={karya.excerpt ?? undefined} />
+          <TombolBookmark workId={karya.id} />
+        </div>
         <div style={{ marginTop: 10 }}>
           <TombolLaporkan targetType="work" targetId={karya.id} />
         </div>
