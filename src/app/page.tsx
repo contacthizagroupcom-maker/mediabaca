@@ -169,8 +169,15 @@ export default async function Home() {
         </div>
       </section>
 
-      <footer style={{ padding: "18px 24px", textAlign: "center" }} className="meta">
-        © {new Date().getFullYear()} MediaBaca · Seluruh karya adalah milik penulisnya masing-masing
+      <footer style={{ borderTop: "1px solid var(--rule)", padding: "26px 24px 30px", textAlign: "center" }}>
+        <nav style={{ display: "flex", gap: 18, justifyContent: "center", flexWrap: "wrap", marginBottom: 14 }}>
+          <Link href="/tentang" style={{ fontFamily: "var(--fm)", fontSize: 11, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--ink2)", textDecoration: "none" }}>Tentang</Link>
+          <Link href="/jelajahi" style={{ fontFamily: "var(--fm)", fontSize: 11, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--ink2)", textDecoration: "none" }}>Jelajahi</Link>
+          <Link href="/daftar" style={{ fontFamily: "var(--fm)", fontSize: 11, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--acc)", textDecoration: "none" }}>Mulai Menulis</Link>
+        </nav>
+        <div className="meta">
+          © {new Date().getFullYear()} MediaBaca · Seluruh karya adalah milik penulisnya masing-masing
+        </div>
       </footer>
     </>
   );

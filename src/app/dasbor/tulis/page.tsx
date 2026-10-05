@@ -173,6 +173,19 @@ function IsiTulis() {
           </p>
         )}
 
+        <details style={{ border: "1px solid var(--rule2)", borderRadius: 6, background: "var(--paper2)", padding: "12px 16px", marginBottom: 18 }}>
+          <summary style={{ cursor: "pointer", fontFamily: "var(--fm)", fontSize: 11, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--acc)" }}>
+            ✍️ Panduan Menulis di MediaBaca
+          </summary>
+          <div style={{ fontSize: 14, color: "var(--ink2)", marginTop: 10, display: "grid", gap: 8 }}>
+            <p style={{ margin: 0 }}><b>1. Pilih jenis &amp; kategori</b> — dari makalah akademik sampai puisi; kategori membantu pembaca menemukan karyamu.</p>
+            <p style={{ margin: 0 }}><b>2. Format dengan toolbar</b> — blok teks lalu klik <b>B</b> tebal, <i>I</i> miring, H2 untuk judul bagian, ❝ untuk kutipan. Ctrl+B / Ctrl+I juga bisa.</p>
+            <p style={{ margin: 0 }}><b>3. Tambahkan sampul</b> — unggah foto atau pakai acak; karya bersampul tampil lebih menarik di beranda dan saat dibagikan.</p>
+            <p style={{ margin: 0 }}><b>4. Simpan Draft</b> kapan pun — lanjutkan di hari lain lewat tombol ✏️ Edit di Karya Saya.</p>
+            <p style={{ margin: 0 }}><b>5. Kirim untuk Review</b> — editor akan memeriksa: disetujui (terbit!), diminta revisi (baca catatannya), atau ditolak. Hanya karya terbit yang tampil publik.</p>
+          </div>
+        </details>
+
         <input
           value={judul}
           onChange={e => setJudul(e.target.value)}
