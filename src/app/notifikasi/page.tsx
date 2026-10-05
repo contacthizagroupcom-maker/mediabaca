@@ -21,6 +21,7 @@ export default function HalamanNotifikasi() {
   const supabase = getSupabaseBrowserClient();
   const [notifs, setNotifs] = useState<Notif[]>([]);
   const [memuat, setMemuat] = useState(true);
+  let saluran: any = null;
 
   useEffect(() => {
     (async () => {
@@ -34,7 +35,24 @@ export default function HalamanNotifikasi() {
         .limit(50);
       setNotifs((data as any) ?? []);
       setMemuat(false);
+
+      // Realtime: daftar ikut bertambah saat ada notifikasi baru
+      saluran = supabase
+        .channel("halaman-notif")
+        .on("postgres_changes",
+          { event: "INSERT", schema: "public", table: "notifications" },
+          async (payload: any) => {
+            if (payload?.new?.user_id !== user.id) return;
+            const { data: baru } = await supabase
+              .from("notifications")
+              .select("id, type, message, is_read, created_at, reference_id")
+              .eq("id", payload.new.id).maybeSingle();
+            if (baru) setNotifs(n => [baru as any, ...n]);
+          })
+        .subscribe();
     })();
+
+    return () => { if (saluran) supabase.removeChannel(saluran); };
   }, [router, supabase]);
 
   async function tandaiSemua() {

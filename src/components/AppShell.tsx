@@ -10,14 +10,43 @@ function Lonceng() {
   const [jumlah, setJumlah] = useState(0);
 
   useEffect(() => {
+    let saluran: any = null;
+
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-      const { count } = await supabase
-        .from("notifications").select("id", { count: "exact", head: true })
-        .eq("user_id", user.id).eq("is_read", false);
-      setJumlah(count ?? 0);
+
+      const muatJumlah = async () => {
+        const { count } = await supabase
+          .from("notifications").select("id", { count: "exact", head: true })
+          .eq("user_id", user.id).eq("is_read", false);
+        setJumlah(count ?? 0);
+      };
+      await muatJumlah();
+
+      // Berlangganan siaran real-time untuk tabel notifications
+      saluran = supabase
+        .channel("notif-" + user.id)
+        .on("postgres_changes",
+          { event: "INSERT", schema: "public", table: "notifications" },
+          (payload: any) => {
+            if (payload?.new?.user_id === user.id) {
+              setJumlah(j => j + 1);
+            }
+          })
+        .on("postgres_changes",
+          { event: "UPDATE", schema: "public", table: "notifications" },
+          (payload: any) => {
+            if (payload?.new?.user_id === user.id && payload.new.is_read) {
+              setJumlah(j => Math.max(0, j - 1));
+            }
+          })
+        .subscribe();
     })();
+
+    return () => {
+      if (saluran) supabase.removeChannel(saluran);
+    };
   }, [supabase]);
 
   return (
