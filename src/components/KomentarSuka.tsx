@@ -5,7 +5,7 @@ import Link from "next/link";
 import { getSupabaseBrowserClient } from "@/lib/supabase";
 
 type Komentar = {
-  id: string; content: string; created_at: string;
+  id: string; content: string; created_at: string; parent_id: string | null;
   profiles: { full_name: string; username: string } | null;
 };
 
@@ -23,6 +23,8 @@ export function SukaDanKomentar({ workId, authorId, authorName, authorUsername }
   const [userId, setUserId] = useState<string | null>(null);
   const [sibuk, setSibuk] = useState(false);
   const [pesan, setPesan] = useState("");
+  const [balasUntuk, setBalasUntuk] = useState<string | null>(null);
+  const [isiBalas, setIsiBalas] = useState("");
 
   async function ambilNama(): Promise<string> {
     const { data: { user } } = await supabase.auth.getUser();
@@ -58,7 +60,7 @@ export function SukaDanKomentar({ workId, authorId, authorName, authorUsername }
 
     const { data: k } = await supabase
       .from("comments")
-      .select("id, content, created_at, profiles(full_name, username)")
+      .select("id, content, created_at, parent_id, profiles(full_name, username)")
       .eq("work_id", workId).eq("status", "VISIBLE")
       .order("created_at", { ascending: true });
     setKomen((k as any) ?? []);
@@ -114,6 +116,21 @@ export function SukaDanKomentar({ workId, authorId, authorName, authorUsername }
       reference_id: workId,
     });
     setIsi(""); setPesan("");
+    await muat();
+    setSibuk(false);
+  }
+
+  async function kirimBalasan(parentId: string) {
+    if (!masuk) return void (window.location.href = "/masuk");
+    if (!isiBalas.trim()) return;
+    setSibuk(true);
+    await supabase.from("comments").insert({ work_id: workId, user_id: userId!, content: isiBalas.trim(), parent_id: parentId });
+    await supabase.from("notifications").insert({
+      user_id: authorId, type: "comment",
+      message: (await ambilNama()) + " membalas diskusi di karya Anda",
+      reference_id: workId,
+    });
+    setIsiBalas(""); setBalasUntuk(null);
     await muat();
     setSibuk(false);
   }
@@ -178,6 +195,40 @@ export function SukaDanKomentar({ workId, authorId, authorName, authorUsername }
                 </span>
               </div>
               <p style={{ margin: "6px 0 0", fontSize: 16 }}>{k.content}</p>
+
+              {masuk && !k.parent_id && (
+                <button onClick={() => setBalasUntuk(balasUntuk === k.id ? null : k.id)}
+                  style={{ background: "none", border: "none", cursor: "pointer", color: balasUntuk === k.id ? "var(--acc)" : "var(--mut)", fontFamily: "var(--fm)", fontSize: 10, letterSpacing: ".1em", textTransform: "uppercase", marginTop: 8, padding: 0 }}>
+                  ↩ Balas
+                </button>
+              )}
+
+              {balasUntuk === k.id && (
+                <div style={{ marginTop: 10 }}>
+                  <textarea className="input" style={{ minHeight: 60 }} value={isiBalas}
+                    onChange={e => setIsiBalas(e.target.value)} placeholder={"Balas " + (k.profiles?.full_name ?? "komentar ini") + "…"} />
+                  <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+                    <button onClick={() => kirimBalasan(k.id)} disabled={sibuk} className="btn btn-acc" style={{ padding: "8px 14px", fontSize: 10 }}>Kirim Balasan</button>
+                    <button onClick={() => { setBalasUntuk(null); setIsiBalas(""); }} className="btn" style={{ padding: "8px 14px", fontSize: 10 }}>Batal</button>
+                  </div>
+                </div>
+              )}
+
+              {komen.filter(x => x.parent_id === k.id).length > 0 && (
+                <div style={{ marginTop: 12, borderLeft: "2px solid var(--rule)", paddingLeft: 16 }}>
+                  {komen.filter(x => x.parent_id === k.id).map(r => (
+                    <div key={r.id} style={{ padding: "8px 0" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
+                        <Link href={`/penulis/${r.profiles?.username ?? ""}`} style={{ fontFamily: "var(--fd)", fontWeight: 600, fontSize: 15 }}>
+                          {r.profiles?.full_name ?? "Pembaca"}
+                        </Link>
+                        <span className="meta">{new Date(r.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}</span>
+                      </div>
+                      <p style={{ margin: "4px 0 0", fontSize: 15 }}>{r.content}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           ))
         )}

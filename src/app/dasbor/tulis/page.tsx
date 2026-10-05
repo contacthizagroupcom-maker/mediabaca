@@ -43,6 +43,7 @@ function IsiTulis() {
   const [sampul, setSampul] = useState("");
   const [abstrak, setAbstrak] = useState("");
   const [kataKunci, setKataKunci] = useState("");
+  const [babs, setBabs] = useState<{ judul: string; isi: string }[]>([]);
   const [daftarKategori, setDaftarKategori] = useState<Kategori[]>([]);
   const [status, setStatus] = useState("DRAFT");
   const [galat, setGalat] = useState("");
@@ -67,6 +68,10 @@ function IsiTulis() {
           const { data: am } = await supabase
             .from("academic_metadata").select("abstract, keywords").eq("work_id", editId).maybeSingle();
           if (am) { setAbstrak(am.abstract ?? ""); setKataKunci(am.keywords ?? ""); }
+          const { data: chs } = await supabase
+            .from("chapters").select("chapter_number, title, content").eq("work_id", editId)
+            .order("chapter_number", { ascending: true });
+          if (chs) setBabs(chs.map((c: any) => ({ judul: c.title ?? "", isi: c.content ?? "" })));
           const { data: wt } = await supabase
             .from("work_tags").select("tags(name)").eq("work_id", editId);
           if (wt) setTagStr(wt.map((x: any) => x.tags?.name).filter(Boolean).join(", "));
@@ -130,6 +135,19 @@ function IsiTulis() {
       } else {
         await supabase.from("academic_metadata")
           .insert({ work_id: idKarya, abstract: abstrak.trim(), keywords: kataKunci.trim() });
+      }
+    }
+
+    if (jenis === "FICTION" && babs.length > 0) {
+      await supabase.from("chapters").delete().eq("work_id", idKarya);
+      for (let i = 0; i < babs.length; i++) {
+        const b = babs[i];
+        if (!b.judul.trim() && !b.isi.replace(/<[^>]+>/g, " ").trim()) continue;
+        await supabase.from("chapters").insert({
+          work_id: idKarya, chapter_number: i + 1,
+          title: b.judul.trim() || ("Bab " + (i + 1)),
+          content: b.isi,
+        });
       }
     }
 
@@ -210,6 +228,32 @@ function IsiTulis() {
               {jumlahKata} kata · ±{Math.max(1, Math.round(jumlahKata / 200))} menit baca
             </p>
           </div>
+
+          {jenis === "FICTION" && (
+            <div className="field">
+              <label>Bab-Bab (untuk Novel / Cerita Bersambung)</label>
+              <div style={{ display: "grid", gap: 14 }}>
+                {babs.map((b, i) => (
+                  <div key={i} style={{ border: "1px solid var(--rule2)", borderRadius: 4, padding: 14, background: "var(--paper2)" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                      <b className="meta" style={{ color: "var(--acc)" }}>BAB {i + 1}</b>
+                      <button type="button" onClick={() => setBabs(babs.filter((_, x) => x !== i))}
+                        style={{ background: "none", border: "1px solid var(--rule2)", borderRadius: 3, cursor: "pointer", color: "var(--err)", padding: "4px 10px", fontFamily: "var(--fm)", fontSize: 10 }}>HAPUS</button>
+                    </div>
+                    <input className="input" placeholder="Judul bab…" value={b.judul}
+                      onChange={e => setBabs(babs.map((x, ix) => ix === i ? { ...x, judul: e.target.value } : x))}
+                      style={{ marginBottom: 8 }} />
+                    <EditorTeks nilai={b.isi} onChange={(html) => setBabs(babs.map((x, ix) => ix === i ? { ...x, isi: html } : x))} />
+                  </div>
+                ))}
+                <button type="button" onClick={() => setBabs([...babs, { judul: "", isi: "" }])}
+                  className="btn" style={{ justifyContent: "center" }}>+ Tambah Bab</button>
+                <small className="meta" style={{ textTransform: "none", fontSize: 11 }}>
+                  Isi utama di atas berfungsi sebagai sinopsis/prakata; setiap bab ditulis di sini.
+                </small>
+              </div>
+            </div>
+          )}
 
           <div className="field">
             <label htmlFor="ringkasan">Ringkasan (opsional)</label>
