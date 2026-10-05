@@ -151,6 +151,16 @@ function IsiTulis() {
       }
     }
 
+    if (kirim && !sampul.trim()) {
+      const lanjut = window.confirm(
+        "Karya ini belum punya sampul.\\n\\n" +
+        "Karya bersampul tampil jauh lebih menarik di beranda dan saat dibagikan ke WhatsApp/media sosial.\\n\\n" +
+        "OK = kirim tanpa sampul (bisa ditambah nanti lewat ✏️ Edit)\\n" +
+        "Batal = kembali menambahkan sampul dulu"
+      );
+      if (!lanjut) { setProses(false); window.scrollTo({ top: 0, behavior: "smooth" }); return; }
+    }
+
     if (kirim) {
       const { error: eSub } = await supabase.from("works").update({ status: "SUBMITTED" }).eq("id", idKarya);
       if (eSub) { setGalat("Tersimpan, tapi gagal mengirim: " + eSub.message); setProses(false); return; }

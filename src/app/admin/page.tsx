@@ -22,7 +22,7 @@ const KELAS: Record<string, string> = {
 export default function Admin() {
   const router = useRouter();
   const supabase = getSupabaseBrowserClient();
-  const [tab, setTab] = useState<"ringkasan" | "pengguna" | "karya" | "laporan" | "komentar">("ringkasan");
+  const [tab, setTab] = useState<"ringkasan" | "pengguna" | "karya" | "laporan" | "komentar" | "analitik">("ringkasan");
   const [bukanAdmin, setBukanAdmin] = useState(false);
   const [memuat, setMemuat] = useState(true);
   const [sibuk, setSibuk] = useState(false);
@@ -31,6 +31,8 @@ export default function Admin() {
   const [pengguna, setPengguna] = useState<(Profil & { peran: string })[]>([]);
   const [karya, setKarya] = useState<Karya[]>([]);
   const [laporan, setLaporan] = useState<Laporan[]>([]);
+  const [statHarian, setStatHarian] = useState<{ tgl: string; jumlah: number }[]>([]);
+  const [karyaTop, setKaryaTop] = useState<{ title: string; slug: string; views_count: number }[]>([]);
   const [komentarModerasi, setKomentarModerasi] = useState<{ id: string; content: string; status: string; profiles: { full_name: string } | null }[]>([]);
 
   async function muatSemua() {
@@ -69,6 +71,22 @@ export default function Admin() {
     const { data: lr } = await supabase
       .from("reports").select("id, target_type, reason, status, created_at").order("created_at", { ascending: false });
     setLaporan((lr as any) ?? []);
+
+    // Analitik: views 14 hari terakhir
+    const { data: vws } = await supabase
+      .from("views").select("created_at").gte("created_at",
+        new Date(Date.now() - 14 * 864e5).toISOString());
+    const petaHarian = new Map<string, number>();
+    (vws ?? []).forEach((v: any) => {
+      const tgl = new Date(v.created_at).toISOString().slice(0, 10);
+      petaHarian.set(tgl, (petaHarian.get(tgl) ?? 0) + 1);
+    });
+    setStatHarian([...petaHarian.entries()].map(([tgl, jumlah]) => ({ tgl, jumlah })).sort((a, b) => a.tgl.localeCompare(b.tgl)));
+
+    // Analitik: karya terpopuler
+    setKaryaTop(k.filter((x: any) => x.status === "PUBLISHED")
+      .sort((a: any, b: any) => (b.views_count ?? 0) - (a.views_count ?? 0))
+      .slice(0, 8).map((x: any) => ({ title: x.title, slug: x.slug, views_count: x.views_count ?? 0 })));
 
     const { data: km } = await supabase
       .from("comments")
@@ -145,6 +163,7 @@ export default function Admin() {
     { id: "karya", label: "Karya" },
     { id: "laporan", label: "Laporan" },
     { id: "komentar", label: "Komentar" },
+    { id: "analitik", label: "Analitik" },
   ] as const;
 
   return (
@@ -154,12 +173,12 @@ export default function Admin() {
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 24, borderBottom: "2px solid var(--ink)", paddingBottom: 0 }}>
           {TABS.map(t => (
             <button key={t.id} onClick={() => setTab(t.id)}
-              style={{
-                padding: "10px 18px", cursor: "pointer", fontFamily: "var(--fm)", fontSize: 11,
+        style={{
+          padding: "10px 18px", cursor: "pointer", fontFamily: "var(--fm)", fontSize: 11,
                 letterSpacing: ".1em", textTransform: "uppercase",
                 background: "none", border: "none", borderBottom: tab === t.id ? "3px solid var(--acc)" : "3px solid transparent",
                 color: tab === t.id ? "var(--acc)" : "var(--mut)", marginBottom: -2,
-              }}>
+        }}>
               {t.label}
             </button>
           ))}
@@ -307,6 +326,48 @@ export default function Admin() {
                 ))}
               </div>
             )}
+          </>
+        )}
+        {tab === "analitik" && (
+          <>
+            <div className="kicker"><span className="idx">📊</span> PEMBACA 14 HARI TERAKHIR <span className="krule"></span></div>
+            {(() => {
+              const maks = Math.max(1, ...statHarian.map(h => h.jumlah));
+              return statHarian.length === 0 ? (
+                <p style={{ color: "var(--mut)", padding: "16px 0" }}>Belum ada data kunjungan — pencatat mulai aktif sejak fitur terpasang.</p>
+              ) : (
+                <div style={{ marginTop: 16 }}>
+                  {statHarian.map(h => (
+                    <div key={h.tgl} style={{ display: "grid", gridTemplateColumns: "90px 1fr 40px", gap: 12, alignItems: "center", padding: "5px 0" }}>
+                      <span className="meta" style={{ textTransform: "none" }}>{new Date(h.tgl).toLocaleDateString("id-ID", { day: "numeric", month: "short" })}</span>
+                      <div style={{ height: 10, background: "var(--paper3)", borderRadius: 2, position: "relative" }}>
+                        <div style={{ position: "absolute", inset: "0 auto 0 0", width: Math.round(h.jumlah / maks * 100) + "%", background: "var(--acc)", borderRadius: 2 }} />
+                      </div>
+                      <span className="meta" style={{ textAlign: "right" }}>{h.jumlah}</span>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
+
+            <div className="kicker" style={{ marginTop: 34 }}><span className="idx">02</span> KARYA TERPOPULER <span className="krule"></span></div>
+            <div style={{ marginTop: 12 }}>
+              {karyaTop.map((k, i) => (
+                <Link key={k.slug} href={`/karya/${k.slug}`} style={{ display: "grid", gridTemplateColumns: "40px 1fr auto", gap: 12, alignItems: "center", padding: "12px 0", borderTop: "1px solid var(--rule)", textDecoration: "none" }}>
+                  <span style={{ fontFamily: "var(--fd)", fontSize: 22, fontWeight: 600, color: "var(--acc)", textAlign: "center" }}>{String(i + 1).padStart(2, "0")}</span>
+                  <b style={{ fontFamily: "var(--fd)", fontSize: 16, color: "var(--ink)" }}>{k.title}</b>
+                  <span className="meta">{k.views_count.toLocaleString("id-ID")} pembaca</span>
+                </Link>
+              ))}
+            </div>
+
+            <div className="kicker" style={{ marginTop: 34 }}><span className="idx">03</span> RINGKASAN PLATFORM <span className="krule"></span></div>
+            <div className="stat-strip" style={{ marginTop: 12 }}>
+              <div className="stat-box"><div className="stat-n">{stat.pengguna}</div><div className="stat-l">Pengguna</div></div>
+              <div className="stat-box"><div className="stat-n">{stat.terbit}</div><div className="stat-l">Karya Terbit</div></div>
+              <div className="stat-box"><div className="stat-n">{stat.pembaca.toLocaleString("id-ID")}</div><div className="stat-l">Total Pembaca</div></div>
+              <div className="stat-box"><div className="stat-n">{stat.komentar}</div><div className="stat-l">Komentar</div></div>
+            </div>
           </>
         )}
       </main>

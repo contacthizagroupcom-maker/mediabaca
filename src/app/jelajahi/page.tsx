@@ -2,6 +2,7 @@ import Link from "next/link";
 import { HeaderPublik } from "@/components/HeaderPublik";
 import { createServerClient } from "@supabase/ssr";
 import { TemaToggle } from "@/components/TemaToggle";
+import { EmptyState } from "@/components/Skeleton";
 
 export const dynamic = "force-dynamic";
 
@@ -88,10 +89,13 @@ export default async function Jelajahi({ searchParams }: { searchParams: Promise
         </div>
 
         {daftar.length === 0 ? (
-          <div style={{ border: "1px dashed var(--rule2)", padding: "40px 20px", textAlign: "center", borderRadius: 4 }}>
-            <p style={{ color: "var(--mut)", marginBottom: 16 }}>Tidak ada karya yang cocok dengan filter ini.</p>
-            <Link href="/jelajahi" className="btn btn-primary">× Reset Semua Filter</Link>
-          </div>
+          <EmptyState
+            ikon="🔍"
+            judul="Tidak ada karya yang cocok"
+            sub="Coba longgarkan filter jenis atau kategori — atau jadilah yang pertama menulis untuk kategori ini."
+            cta="× Reset Semua Filter"
+            href="/jelajahi"
+          />
         ) : (
           <ul className="work-list">
             {daftar.map((w: any) => (

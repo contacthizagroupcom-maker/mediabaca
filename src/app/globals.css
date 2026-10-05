@@ -72,3 +72,12 @@ a:hover .work-title{color:var(--acc)}
 
 .container-mb{max-width:1080px;margin:0 auto;padding:0 24px}
 .narrow{max-width:720px}
+
+/* ===== SKELETON LOADING ===== */
+@keyframes mb-pulse { 0%, 100% { opacity: 1 } 50% { opacity: .4 } }
+.skeleton {
+  background: var(--rule); border-radius: 4px;
+  animation: mb-pulse 1.4s ease-in-out infinite;
+}
+.skeleton-card { border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; }
+.skeleton-img { height: 170; }
