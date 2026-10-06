@@ -89,6 +89,7 @@ export function HeaderPublik({ aktif }: { aktif?: string }) {
                     { href: "/dasbor", label: "📊 Dasbor Penulis" },
                     { href: "/dasbor/karya", label: "📚 Karya Saya" },
                     { href: "/dasbor/simpanan", label: "🔖 Simpanan Bacaan" },
+                    { href: "/dasbor/riwayat", label: "📖 Riwayat Bacaan" },
                     { href: "/dasbor/profil", label: "👤 Profil" },
                     { href: "/dasbor/pengaturan", label: "⚙️ Pengaturan" },
                   ]
