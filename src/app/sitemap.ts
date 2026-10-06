@@ -22,6 +22,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: baseUrl + "/jelajahi", lastModified: new Date(), priority: 0.8 },
     { url: baseUrl + "/privasi", lastModified: new Date(), priority: 0.3 },
     { url: baseUrl + "/disclaimer", lastModified: new Date(), priority: 0.3 },
+    { url: baseUrl + "/kontak", lastModified: new Date(), priority: 0.3 },
     ...(karya ?? []).map((k: any) => ({
       url: `${baseUrl}/karya/${k.slug}`,
       lastModified: k.updated_at ? new Date(k.updated_at) : new Date(),

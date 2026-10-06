@@ -77,8 +77,7 @@ export default function Privasi() {
           <section>
             <div className="kicker"><span className="idx">06</span> KONTAK <span className="krule"></span></div>
             <p style={{ color: "var(--ink2)", marginTop: 10, fontSize: 16, lineHeight: 1.8 }}>
-              Pertanyaan tentang kebijakan privasi ini dapat disampaikan melalui email administrator
-              platform. Kami akan menanggapi dalam waktu yang wajar.
+              Pertanyaan tentang kebijakan privasi ini dapat disampaikan melalui halaman Kontak kami: email mediabaca.id@gmail.com atau WhatsApp +62 819-9597-7916. Kami akan menanggapi dalam waktu yang wajar.
             </p>
           </section>
         </div>
