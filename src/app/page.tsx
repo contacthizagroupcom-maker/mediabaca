@@ -46,7 +46,7 @@ export default async function Home() {
       <HeaderPublik aktif="beranda" />
 
       <Masthead
-        tanggal={new Intl.DateTimeFormat("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(new Date())}
+        tanggal={new Intl.DateTimeFormat("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Jakarta" }).format(new Date())}
         edisi={"Edisi No. " + (works.length + 40)}
       />
 
