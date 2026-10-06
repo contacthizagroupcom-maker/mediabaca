@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createServerClient } from "@supabase/ssr";
 import { HeaderPublik } from "@/components/HeaderPublik";
+import { Masthead } from "@/components/Masthead";
 
 export const dynamic = "force-dynamic";
 
@@ -44,6 +45,11 @@ export default async function Home() {
     <>
       <HeaderPublik aktif="beranda" />
 
+      <Masthead
+        tanggal={new Intl.DateTimeFormat("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(new Date())}
+        edisi={"Edisi No. " + (works.length + 40)}
+      />
+
       {/* ===== TAB NAVIGASI ===== */}
       <div style={{ borderBottom: "1px solid var(--rule)", background: "var(--paper)", position: "sticky", top: 0, zIndex: 40 }}>
         <div className="container-mb" style={{ display: "flex", gap: 4, overflowX: "auto", padding: "0 24px", scrollbarWidth: "none" }}>
@@ -63,7 +69,7 @@ export default async function Home() {
       {utama ? (
         <main className="container-mb" style={{ padding: "26px 24px 10px" }}>
           <Link href={`/karya/${utama.slug}`} style={{ display: "block", textDecoration: "none" }}>
-            <div style={{ position: "relative", borderRadius: 8, overflow: "hidden", border: "1px solid var(--rule)" }}>
+            <div style={{ position: "relative", borderRadius: 8, overflow: "hidden", border: "1px solid var(--rule)" }} className="mb-muncul mb-kartu">
               {utama.cover_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={utama.cover_url} alt={utama.title} style={{ width: "100%", height: "clamp(200px, 42vw, 380px)", objectFit: "cover", display: "block" }} />
@@ -100,10 +106,10 @@ export default async function Home() {
       {/* ===== TERBARU DI MEDIABACA ===== */}
       {sisanya.length > 0 && (
         <section className="container-mb" style={{ padding: "30px 24px 6px" }}>
-          <div className="kicker"><span className="idx">01</span> TERBARU DI MEDIABACA <span className="krule"></span></div>
+          <div className="kicker"><span className="idx">01</span> TERBARU DI MEDIABACA <span className="krule mb-krule-anim"></span></div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: 16, marginTop: 16 }}>
-            {sisanya.map((w: any) => (
-              <Link key={w.id} href={`/karya/${w.slug}`} style={{ textDecoration: "none" }}>
+            {sisanya.map((w: any, i: number) => (
+              <Link key={w.id} href={`/karya/${w.slug}`} style={{ textDecoration: "none", borderRadius: 6, overflow: "hidden", border: "1px solid var(--rule)" }} className={`mb-kartu mb-muncul-${Math.min(4, i % 5)}`}> 
                 {w.cover_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={w.cover_url} alt={w.title} loading="lazy" style={{ width: "100%", height: 110, objectFit: "cover", borderRadius: 6, border: "1px solid var(--rule)", display: "block" }} />
@@ -123,7 +129,7 @@ export default async function Home() {
       {/* ===== TERPOPULER MINGGU INI ===== */}
       {populer.length > 0 && (
         <section className="container-mb" style={{ padding: "30px 24px 6px" }}>
-          <div className="kicker"><span className="idx">02</span> TERPOPULER MINGGU INI <span className="krule"></span></div>
+          <div className="kicker"><span className="idx">02</span> TERPOPULER MINGGU INI <span className="krule mb-krule-anim"></span></div>
           <div style={{ marginTop: 10 }}>
             {populer.map((w: any, i: number) => (
               <Link key={w.id} href={`/karya/${w.slug}`} style={{ display: "grid", gridTemplateColumns: "44px 1fr", gap: 14, alignItems: "center", padding: "14px 0", borderTop: "1px solid var(--rule)", textDecoration: "none" }}>
@@ -140,7 +146,7 @@ export default async function Home() {
 
       {/* ===== JELAJAHI PILAR ===== */}
       <section className="container-mb" style={{ padding: "34px 24px 10px" }}>
-        <div className="kicker"><span className="idx">03</span> JELAJAHI PILAR <span className="krule"></span></div>
+        <div className="kicker"><span className="idx">03</span> JELAJAHI PILAR <span className="krule mb-krule-anim"></span></div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 12, marginTop: 16 }}>
           {PILAR.map(p => (
             <Link key={p.jenis} href={`/jelajahi?jenis=${p.jenis}`} style={{

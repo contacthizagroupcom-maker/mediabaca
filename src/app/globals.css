@@ -81,3 +81,57 @@ a:hover .work-title{color:var(--acc)}
 }
 .skeleton-card { border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; }
 .skeleton-img { height: 170; }
+
+/* ===== ANIMASI MEDIABACA — halus & berkelas ===== */
+
+/* Fade-up saat elemen muncul di layar */
+@keyframes mb-muncul {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.mb-muncul { animation: mb-muncul .6s ease both; }
+.mb-muncul-1 { animation: mb-muncul .6s ease .08s both; }
+.mb-muncul-2 { animation: mb-muncul .6s ease .16s both; }
+.mb-muncul-3 { animation: mb-muncul .6s ease .24s both; }
+.mb-muncul-4 { animation: mb-muncul .6s ease .32s both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .mb-muncul, .mb-muncul-1, .mb-muncul-2, .mb-muncul-3, .mb-muncul-4 { animation: none; }
+}
+
+/* Kartu karya: naik halus saat disentuh */
+.mb-kartu {
+  transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease;
+}
+.mb-kartu:hover, .mb-kartu:active {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 26px rgba(13, 18, 13, .14);
+  border-color: var(--acc) !important;
+}
+[data-theme="dark"] .mb-kartu:hover, [data-theme="dark"] .mb-kartu:active {
+  box-shadow: 0 10px 26px rgba(0, 0, 0, .5);
+}
+
+/* Gambar kartu: zoom sangat halus saat hover */
+.mb-kartu img { transition: transform .35s ease; }
+.mb-kartu:hover img { transform: scale(1.04); }
+
+/* Baris daftar: latar lembut saat hover */
+.mb-baris { transition: background .18s ease; }
+.mb-baris:hover { background: var(--paper2); }
+
+/* Badge & tombol kecil: reaksi cepat */
+.btn { transition: all .16s ease; }
+.btn:active { transform: scale(.97); }
+
+/* Judul link: hijau saat sentuh */
+.mb-judul { transition: color .15s ease; }
+a:hover .mb-judul { color: var(--acc); }
+
+/* Garis kicker yang tumbuh saat masuk */
+@keyframes mb-garis { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.mb-krule-anim { transform-origin: left; animation: mb-garis .8s ease .3s both; }
+
+/* Titik denyut halus untuk "hidup" di statistik */
+@keyframes mb-denot { 0%,100% { opacity: 1 } 50% { opacity: .35 } }
+.mb-denot { animation: mb-denot 2s ease infinite; }
