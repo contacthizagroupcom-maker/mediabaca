@@ -124,24 +124,124 @@ export function SukaDanKomentar({ workId, authorId, authorName, authorUsername }
     if (!masuk) return void (window.location.href = "/masuk");
     if (!isiBalas.trim()) return;
     setSibuk(true);
-    await supabase.from("comments").insert({ work_id: workId, user_id: userId!, content: isiBalas.trim(), parent_id: parentId });
-    await supabase.from("notifications").insert({
-      user_id: authorId, type: "comment",
-      message: (await ambilNama()) + " membalas diskusi di karya Anda",
-      reference_id: workId,
+    await supabase.from("comments").insert({
+      work_id: workId, user_id: userId!, content: isiBalas.trim(), parent_id: parentId,
     });
+
+    // Notifikasi ke pemilik komentar induk (bukan diri sendiri)
+    const induk = komen.find(k => k.id === parentId);
+    if (induk) {
+      const { data: indukPenulis } = await supabase
+        .from("comments").select("user_id").eq("id", parentId).maybeSingle();
+      if (indukPenulis?.user_id && indukPenulis.user_id !== userId) {
+        await supabase.from("notifications").insert({
+          user_id: indukPenulis.user_id, type: "comment",
+          message: (await ambilNama()) + " membalas komentarmu: \"" + (induk.content.slice(0, 40)) + (induk.content.length > 40 ? "…" : "") + "\"",
+          reference_id: workId,
+        });
+      }
+    }
+
     setIsiBalas(""); setBalasUntuk(null);
     await muat();
     setSibuk(false);
   }
 
   async function hapusKomentar(id: string) {
-    if (!confirm("Hapus komentar Anda?")) return;
+    if (!confirm("Hapus komentar Anda? Balasannya juga akan disembunyikan.")) return;
     setSibuk(true);
     await supabase.from("comments").update({ status: "DELETED" }).eq("id", id);
+    // Sembunyikan juga semua balasannya
+    await supabase.from("comments").update({ status: "DELETED" }).eq("parent_id", id);
     await muat();
     setSibuk(false);
   }
+
+  function waktu(d: string) {
+    const s = (Date.now() - new Date(d).getTime()) / 1000;
+    if (s < 60) return "baru saja";
+    if (s < 3600) return Math.floor(s / 60) + " mnt lalu";
+    if (s < 86400) return Math.floor(s / 3600) + " jam lalu";
+    if (s < 604800) return Math.floor(s / 86400) + " hari lalu";
+    return new Date(d).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
+  }
+
+  // === Pohon diskusi: balasan berjenjang penuh ===
+  function balasanDari(id: string): Komentar[] {
+    return komen.filter(k => k.parent_id === id);
+  }
+
+  function KartuKomentar({ k, kedalaman }: { k: Komentar; kedalaman: number }) {
+    const anak = balasanDari(k.id);
+    return (
+      <div style={{
+        borderTop: kedalaman === 0 ? "1px solid var(--rule)" : "none",
+        padding: kedalaman === 0 ? "16px 0" : "10px 0 0",
+      }}>
+        <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+          {kedalaman > 0 && (
+            <div style={{
+              width: 26, height: 26, borderRadius: "50%", flexShrink: 0,
+              background: "var(--paper3)", display: "flex", alignItems: "center", justifyContent: "center",
+              fontFamily: "var(--fd)", fontSize: 11, color: "var(--ink2)",
+            }}>
+              {(k.profiles?.full_name ?? "P").split(" ").map(w => w[0]).slice(0, 2).join("")}
+            </div>
+          )}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", gap: 8, flexWrap: "wrap", alignItems: "baseline" }}>
+              <span style={{ display: "inline-flex", gap: 8, alignItems: "baseline", flexWrap: "wrap" }}>
+                <Link href={`/penulis/${k.profiles?.username ?? ""}`} style={{ fontFamily: "var(--fd)", fontWeight: 600, fontSize: kedalaman === 0 ? 16 : 15, textDecoration: "none" }}>
+                  {k.profiles?.full_name ?? "Pembaca"}
+                </Link>
+                <span className="meta" style={{ textTransform: "none", fontSize: 10.5 }}>{waktu(k.created_at)}</span>
+              </span>
+              <span style={{ display: "inline-flex", gap: 10, alignItems: "center" }}>
+                {userId && (
+                  <button onClick={() => hapusKomentar(k.id)} style={{ background: "none", border: "none", color: "var(--mut)", cursor: "pointer", fontSize: 9.5, fontFamily: "var(--fm)", textTransform: "uppercase" }}>Hapus</button>
+                )}
+                <TombolLaporKecil targetId={k.id} />
+                {masuk && kedalaman < 3 && (
+                  <button onClick={() => setBalasUntuk(balasUntuk === k.id ? null : k.id)}
+                    style={{ background: "none", border: "none", cursor: "pointer", color: balasUntuk === k.id ? "var(--acc)" : "var(--mut)", fontFamily: "var(--fm)", fontSize: 9.5, letterSpacing: ".1em", textTransform: "uppercase" }}>
+                    ↩ Balas
+                  </button>
+                )}
+              </span>
+            </div>
+            <p style={{ margin: "4px 0 0", fontSize: kedalaman === 0 ? 16 : 15, lineHeight: 1.55 }}>{k.content}</p>
+
+            {balasUntuk === k.id && (
+              <div style={{ marginTop: 10 }}>
+                <textarea className="input" style={{ minHeight: 60 }} value={isiBalas}
+                  onChange={e => setIsiBalas(e.target.value)}
+                  placeholder={"Balas " + (k.profiles?.full_name ?? "komentar ini") + "…"} />
+                <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+                  <button onClick={() => kirimBalasan(k.id)} disabled={sibuk} className="btn btn-acc" style={{ padding: "8px 14px", fontSize: 10 }}>Kirim Balasan</button>
+                  <button onClick={() => { setBalasUntuk(null); setIsiBalas(""); }} className="btn" style={{ padding: "8px 14px", fontSize: 10 }}>Batal</button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {anak.length > 0 && (
+          <div style={{
+            marginLeft: kedalaman === 0 ? 26 : 12,
+            paddingLeft: 12,
+            borderLeft: "2px solid var(--rule)",
+            marginTop: 10,
+          }}>
+            {anak.map(a => (
+              <KartuKomentar key={a.id} k={a} kedalaman={kedalaman + 1} />
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  const akar = komen.filter(k => !k.parent_id);
 
   return (
     <section style={{ marginTop: 56 }}>
@@ -177,59 +277,11 @@ export function SukaDanKomentar({ workId, authorId, authorName, authorUsername }
       )}
 
       <div>
-        {komen.length === 0 ? (
+        {akar.length === 0 ? (
           <p style={{ color: "var(--mut)", padding: "12px 0" }}>Belum ada komentar — jadilah yang pertama berdiskusi.</p>
         ) : (
-          komen.map(k => (
-            <div key={k.id} style={{ borderTop: "1px solid var(--rule)", padding: "16px 0" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap", alignItems: "baseline" }}>
-                <Link href={`/penulis/${k.profiles?.username ?? ""}`} style={{ fontFamily: "var(--fd)", fontWeight: 600 }}>
-                  {k.profiles?.full_name ?? "Pembaca"}
-                </Link>
-                <span className="meta" style={{ display: "inline-flex", gap: 10, alignItems: "center" }}>
-                  {new Date(k.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}
-                  {userId && (
-                    <button onClick={() => hapusKomentar(k.id)} style={{ background: "none", border: "none", color: "var(--mut)", cursor: "pointer", fontSize: 10, fontFamily: "var(--fm)", textTransform: "uppercase" }}>Hapus</button>
-                  )}
-                  <TombolLaporKecil targetId={k.id} />
-                </span>
-              </div>
-              <p style={{ margin: "6px 0 0", fontSize: 16 }}>{k.content}</p>
-
-              {masuk && !k.parent_id && (
-                <button onClick={() => setBalasUntuk(balasUntuk === k.id ? null : k.id)}
-                  style={{ background: "none", border: "none", cursor: "pointer", color: balasUntuk === k.id ? "var(--acc)" : "var(--mut)", fontFamily: "var(--fm)", fontSize: 10, letterSpacing: ".1em", textTransform: "uppercase", marginTop: 8, padding: 0 }}>
-                  ↩ Balas
-                </button>
-              )}
-
-              {balasUntuk === k.id && (
-                <div style={{ marginTop: 10 }}>
-                  <textarea className="input" style={{ minHeight: 60 }} value={isiBalas}
-                    onChange={e => setIsiBalas(e.target.value)} placeholder={"Balas " + (k.profiles?.full_name ?? "komentar ini") + "…"} />
-                  <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-                    <button onClick={() => kirimBalasan(k.id)} disabled={sibuk} className="btn btn-acc" style={{ padding: "8px 14px", fontSize: 10 }}>Kirim Balasan</button>
-                    <button onClick={() => { setBalasUntuk(null); setIsiBalas(""); }} className="btn" style={{ padding: "8px 14px", fontSize: 10 }}>Batal</button>
-                  </div>
-                </div>
-              )}
-
-              {komen.filter(x => x.parent_id === k.id).length > 0 && (
-                <div style={{ marginTop: 12, borderLeft: "2px solid var(--rule)", paddingLeft: 16 }}>
-                  {komen.filter(x => x.parent_id === k.id).map(r => (
-                    <div key={r.id} style={{ padding: "8px 0" }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
-                        <Link href={`/penulis/${r.profiles?.username ?? ""}`} style={{ fontFamily: "var(--fd)", fontWeight: 600, fontSize: 15 }}>
-                          {r.profiles?.full_name ?? "Pembaca"}
-                        </Link>
-                        <span className="meta">{new Date(r.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}</span>
-                      </div>
-                      <p style={{ margin: "4px 0 0", fontSize: 15 }}>{r.content}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+          akar.map(k => (
+            <KartuKomentar key={k.id} k={k} kedalaman={0} />
           ))
         )}
       </div>
