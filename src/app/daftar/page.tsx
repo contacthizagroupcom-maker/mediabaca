@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { getSupabaseBrowserClient } from "@/lib/supabase";
+import { HeaderPublik } from "@/components/HeaderPublik";
 
 export default function HalamanDaftar() {
   const router = useRouter();
@@ -34,46 +35,46 @@ export default function HalamanDaftar() {
   }
 
   return (
-    <main style={{ maxWidth: 440, margin: "0 auto", padding: "60px 24px", fontFamily: "var(--fb)" }}>
-      <Link href="/" className="site-brand" style={{ display: "inline-block", marginBottom: 24, background: "none", color: "var(--ink)" }}>
-        Media<em style={{ color: "var(--acc)" }}>Baca</em>
-      </Link>
-      <div className="kicker"><span className="idx">✦</span> DAFTAR <span className="krule"></span></div>
-      <h1 style={{ fontSize: 30, margin: "12px 0 6px" }}>Rumah untuk gagasan Anda.</h1>
-      <p style={{ color: "var(--mut)", marginBottom: 24, fontStyle: "italic" }}>Satu akun untuk membaca, menulis, dan membangun portofolio.</p>
-      {galat && <p style={{ color: "var(--err)", border: "1px solid var(--err)", padding: 12, borderRadius: 4, marginBottom: 16 }}>{galat}</p>}
-      <form onSubmit={daftar} style={{ display: "grid", gap: 16 }}>
-        <div className="field">
-          <label htmlFor="nama">Nama lengkap</label>
-          <input id="nama" className="input" value={nama} onChange={e => setNama(e.target.value)} placeholder="Taufik Hidayat" />
-        </div>
-        <div className="field">
-          <label htmlFor="username">Username</label>
-          <input id="username" className="input" value={username}
-            onChange={e => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-"))}
-            placeholder="taufik-hidayat" />
-          <small className="meta" style={{ textTransform: "none", fontSize: 11 }}>Huruf kecil, angka, tanda hubung — alamat profilmu nanti</small>
-        </div>
-        <div className="field">
-          <label htmlFor="email">Email</label>
-          <input id="email" type="email" className="input" value={email} onChange={e => setEmail(e.target.value)} />
-        </div>
-        <div className="field">
-          <label htmlFor="sandi">Kata sandi</label>
-          <input id="sandi" type="password" className="input" value={sandi} onChange={e => setSandi(e.target.value)} />
-          <small className="meta" style={{ textTransform: "none", fontSize: 11 }}>Minimal 8 karakter</small>
-        </div>
-        <div className="field">
-          <label htmlFor="konfirmasi">Konfirmasi kata sandi</label>
-          <input id="konfirmasi" type="password" className="input" value={konfirmasi} onChange={e => setKonfirmasi(e.target.value)} />
-        </div>
-        <button type="submit" disabled={proses} className="btn btn-acc" style={{ justifyContent: "center", padding: 14 }}>
-          {proses ? "Mendaftarkan…" : "Daftar sebagai Penulis"}
-        </button>
-      </form>
-      <p style={{ marginTop: 20 }} className="meta">
-        Sudah punya akun? <Link href="/masuk" style={{ color: "var(--acc)", textTransform: "none", fontSize: 13 }}>Masuk →</Link>
-      </p>
-    </main>
+    <>
+      <HeaderPublik />
+      <main style={{ maxWidth: 440, margin: "0 auto", padding: "48px 24px 80px", fontFamily: "var(--fb)" }}>
+        <div className="kicker"><span className="idx">✦</span> DAFTAR <span className="krule"></span></div>
+        <h1 style={{ fontFamily: "var(--fd)", fontSize: 30, margin: "12px 0 6px" }}>Rumah untuk gagasan Anda.</h1>
+        <p style={{ color: "var(--mut)", fontStyle: "italic", marginBottom: 24 }}>Satu akun untuk membaca, menulis, dan membangun portofolio.</p>
+        {galat && <p style={{ color: "var(--err)", border: "1px solid var(--err)", background: "var(--paper2)", padding: 12, borderRadius: 4, marginBottom: 16 }}>{galat}</p>}
+        <form onSubmit={daftar} style={{ display: "grid", gap: 16 }}>
+          <div className="field">
+            <label htmlFor="nama">Nama lengkap</label>
+            <input id="nama" className="input" value={nama} onChange={e => setNama(e.target.value)} placeholder="Taufik Hidayat" required />
+          </div>
+          <div className="field">
+            <label htmlFor="username">Username</label>
+            <input id="username" className="input" value={username}
+              onChange={e => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-"))}
+              placeholder="taufik-hidayat" required />
+            <small className="meta" style={{ textTransform: "none", fontSize: 11 }}>Huruf kecil, angka, tanda hubung — alamat profilmu nanti</small>
+          </div>
+          <div className="field">
+            <label htmlFor="email">Email</label>
+            <input id="email" type="email" className="input" value={email} onChange={e => setEmail(e.target.value)} required />
+          </div>
+          <div className="field">
+            <label htmlFor="sandi">Kata sandi</label>
+            <input id="sandi" type="password" className="input" value={sandi} onChange={e => setSandi(e.target.value)} required />
+            <small className="meta" style={{ textTransform: "none", fontSize: 11 }}>Minimal 8 karakter</small>
+          </div>
+          <div className="field">
+            <label htmlFor="konfirmasi">Konfirmasi kata sandi</label>
+            <input id="konfirmasi" type="password" className="input" value={konfirmasi} onChange={e => setKonfirmasi(e.target.value)} required />
+          </div>
+          <button type="submit" disabled={proses} className="btn btn-acc" style={{ justifyContent: "center", padding: 14 }}>
+            {proses ? "Mendaftarkan…" : "Daftar sebagai Penulis"}
+          </button>
+        </form>
+        <p style={{ marginTop: 20 }} className="meta">
+          Sudah punya akun? <Link href="/masuk" style={{ color: "var(--acc)", textTransform: "none", fontSize: 13 }}>Masuk →</Link>
+        </p>
+      </main>
+    </>
   );
 }
