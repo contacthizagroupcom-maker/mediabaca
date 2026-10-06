@@ -178,6 +178,8 @@ export default async function Home() {
       <footer style={{ borderTop: "1px solid var(--rule)", padding: "26px 24px 30px", textAlign: "center" }}>
         <nav style={{ display: "flex", gap: 18, justifyContent: "center", flexWrap: "wrap", marginBottom: 14 }}>
           <Link href="/tentang" style={{ fontFamily: "var(--fm)", fontSize: 11, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--ink2)", textDecoration: "none" }}>Tentang</Link>
+          <Link href="/privasi" style={{ fontFamily: "var(--fm)", fontSize: 11, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--ink2)", textDecoration: "none" }}>Privasi</Link>
+          <Link href="/disclaimer" style={{ fontFamily: "var(--fm)", fontSize: 11, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--ink2)", textDecoration: "none" }}>Disclaimer</Link>
           <Link href="/jelajahi" style={{ fontFamily: "var(--fm)", fontSize: 11, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--ink2)", textDecoration: "none" }}>Jelajahi</Link>
           <Link href="/daftar" style={{ fontFamily: "var(--fm)", fontSize: 11, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--acc)", textDecoration: "none" }}>Mulai Menulis</Link>
         </nav>
