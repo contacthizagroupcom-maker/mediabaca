@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createServerClient } from "@supabase/ssr";
 import { HeaderPublik } from "@/components/HeaderPublik";
 import { Masthead } from "@/components/Masthead";
+import { MuatLagi } from "@/components/MuatLagi";
 
 export const dynamic = "force-dynamic";
 
@@ -13,7 +14,7 @@ async function ambilSemua() {
   );
   const { data } = await supabase
     .from("works")
-    .select("id, title, slug, excerpt, cover_url, published_at, reading_time, views_count, content_type, profiles(full_name, username, avatar_url)")
+    .select("id, title, slug, excerpt, cover_url, featured, published_at, reading_time, views_count, content_type, profiles(full_name, username, avatar_url)")
     .eq("status", "PUBLISHED")
     .order("published_at", { ascending: false });
   return data ?? [];
@@ -31,6 +32,7 @@ export default async function Home() {
   const utama = (works[0] as any) ?? null;
   const sisanya = works.slice(1);
   const populer = [...works].sort((a: any, b: any) => (b.views_count ?? 0) - (a.views_count ?? 0)).slice(0, 5);
+  const unggulan = (works as any[]).filter(w => w.featured).slice(0, 3);
   const totalViews = works.reduce((s: number, w: any) => s + (w.views_count ?? 0), 0);
 
   const PILAR = [
@@ -92,10 +94,9 @@ export default async function Home() {
             <h1 style={{ fontFamily: "var(--fd)", fontSize: "clamp(1.4rem, 4vw, 2rem)", lineHeight: 1.2, margin: "16px 0 8px", color: "var(--ink)" }}>
               {utama.title}
             </h1>
-            <p style={{ color: "var(--ink2)", margin: "0 0 10px", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+            <p style={{ color: "var(--ink2)", margin: "0 0 12px", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
               {utama.excerpt}
             </p>
-            {/* Penulis kartu utama — avatar + nama + username */}
             <Link href={`/penulis/${utama.profiles?.username ?? ""}`} style={{ display: "inline-flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={utama.profiles?.avatar_url || "https://picsum.photos/seed/mb-anon/100/100.jpg"} alt=""
@@ -116,6 +117,39 @@ export default async function Home() {
         </main>
       )}
 
+      {/* ===== KARYA PILIHAN EDITOR ===== */}
+      {unggulan.length > 0 && (
+        <section className="container-mb" style={{ padding: "30px 24px 6px" }}>
+          <div className="kicker"><span className="idx">★</span> KARYA PILIHAN EDITOR <span className="krule mb-krule-anim"></span></div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 20, marginTop: 18 }}>
+            {unggulan.map((w: any) => (
+              <Link key={w.id} href={`/karya/${w.slug}`} className="mb-kartu"
+                style={{ display: "flex", gap: 14, alignItems: "center", textDecoration: "none", border: "1px solid var(--acc)", borderRadius: 8, padding: 14, background: "var(--paper2)" }}>
+                {w.cover_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={w.cover_url} alt="" loading="lazy" style={{ width: 72, height: 72, borderRadius: 6, objectFit: "cover", flexShrink: 0, border: "1px solid var(--rule)" }} />
+                ) : (
+                  <div style={{ width: 72, height: 72, borderRadius: 6, background: "var(--ink)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <span style={{ fontFamily: "var(--fd)", fontSize: 22, color: "#4CC97B", fontStyle: "italic" }}>MB</span>
+                  </div>
+                )}
+                <span style={{ minWidth: 0 }}>
+                  <span style={{ fontFamily: "var(--fm)", fontSize: 9, letterSpacing: ".12em", color: "var(--acc)", textTransform: "uppercase", display: "block", marginBottom: 3 }}>
+                    ★ Pilihan
+                  </span>
+                  <b style={{ fontFamily: "var(--fd)", fontSize: 16, color: "var(--ink)", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", lineHeight: 1.25 }}>
+                    {w.title}
+                  </b>
+                  <span style={{ fontFamily: "var(--fm)", fontSize: 10, color: "var(--mut)" }}>
+                    {w.profiles?.full_name ?? "Penulis"} · {w.reading_time} mnt
+                  </span>
+                </span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* ===== SEMUA KARYA ===== */}
       {sisanya.length > 0 && (
         <section className="container-mb" style={{ padding: "30px 24px 6px" }}>
@@ -126,57 +160,60 @@ export default async function Home() {
 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 20, marginTop: 20 }}>
             {sisanya.map((w: any, i: number) => (
-              <Link key={w.id} href={`/karya/${w.slug}`}
-                className={`mb-kartu mb-muncul-${Math.min(4, i % 5)}`}
-                style={{ textDecoration: "none", borderRadius: 8, overflow: "hidden", border: "1px solid var(--rule)", background: "var(--paper)" }}>
+              <div key={w.id} style={i >= 12 ? { display: "none" } : undefined} {...(i >= 12 ? { "data-tersembunyi": "" } : {})}>
+                <Link href={`/karya/${w.slug}`}
+                  className={`mb-kartu mb-muncul-${Math.min(4, i % 5)}`}
+                  style={{ textDecoration: "none", borderRadius: 8, overflow: "hidden", border: "1px solid var(--rule)", background: "var(--paper)", display: "block" }}>
 
-                {w.cover_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={w.cover_url} alt={w.title} loading="lazy"
-                    style={{ width: "100%", height: 160, objectFit: "cover", display: "block", borderBottom: "1px solid var(--rule)" }} />
-                ) : (
-                  <div style={{ width: "100%", height: 160, background: "var(--ink)", display: "flex", alignItems: "center", justifyContent: "center", borderBottom: "1px solid var(--rule)" }}>
-                    <span style={{ fontFamily: "var(--fd)", fontSize: 34, color: "#4CC97B", fontStyle: "italic" }}>MB</span>
-                  </div>
-                )}
-
-                <div style={{ padding: "14px 16px 16px" }}>
-                  <span style={{
-                    display: "inline-block", fontSize: 9, letterSpacing: ".1em", textTransform: "uppercase",
-                    fontFamily: "var(--fm)", color: "var(--acc)", border: "1px solid var(--acc)",
-                    borderRadius: 3, padding: "2px 7px", marginBottom: 8,
-                  }}>{JENIS_LABEL[w.content_type] ?? "KARYA"}</span>
-
-                  <h3 style={{ fontFamily: "var(--fd)", fontSize: 18, fontWeight: 600, lineHeight: 1.3, color: "var(--ink)", margin: "0 0 6px", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
-                    {w.title}
-                  </h3>
-
-                  {w.excerpt && (
-                    <p style={{ color: "var(--ink2)", fontSize: 13.5, margin: "0 0 12px", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
-                      {w.excerpt}
-                    </p>
+                  {w.cover_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={w.cover_url} alt={w.title} loading="lazy"
+                      style={{ width: "100%", height: 160, objectFit: "cover", display: "block", borderBottom: "1px solid var(--rule)" }} />
+                  ) : (
+                    <div style={{ width: "100%", height: 160, background: "var(--ink)", display: "flex", alignItems: "center", justifyContent: "center", borderBottom: "1px solid var(--rule)" }}>
+                      <span style={{ fontFamily: "var(--fd)", fontSize: 34, color: "#4CC97B", fontStyle: "italic" }}>MB</span>
+                    </div>
                   )}
 
-                  {/* BARIS PENULIS: avatar bulat + nama + @username */}
-                  <Link href={`/penulis/${w.profiles?.username ?? ""}`} style={{ display: "flex", alignItems: "center", gap: 9, textDecoration: "none", paddingTop: 10, borderTop: "1px solid var(--rule)" }}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={w.profiles?.avatar_url || "https://picsum.photos/seed/mb-anon/100/100.jpg"} alt=""
-                      loading="lazy"
-                      style={{ width: 30, height: 30, borderRadius: "50%", objectFit: "cover", flexShrink: 0, border: "1.5px solid var(--rule2)" }} />
-                    <span style={{ minWidth: 0 }}>
-                      <b style={{ fontFamily: "var(--fd)", fontSize: 13.5, color: "var(--ink)", display: "block", lineHeight: 1.2 }}>
-                        {w.profiles?.full_name ?? "Penulis"}
-                      </b>
-                      <span style={{ fontFamily: "var(--fm)", fontSize: 10, color: "var(--mut)" }}>@{w.profiles?.username ?? "penulis"}</span>
-                    </span>
-                    <span style={{ marginLeft: "auto", fontFamily: "var(--fm)", fontSize: 10, color: "var(--mut)", whiteSpace: "nowrap" }}>
-                      {w.reading_time} mnt
-                    </span>
-                  </Link>
-                </div>
-              </Link>
+                  <div style={{ padding: "14px 16px 16px" }}>
+                    <span style={{
+                      display: "inline-block", fontSize: 9, letterSpacing: ".1em", textTransform: "uppercase",
+                      fontFamily: "var(--fm)", color: "var(--acc)", border: "1px solid var(--acc)",
+                      borderRadius: 3, padding: "2px 7px", marginBottom: 8,
+                    }}>{JENIS_LABEL[w.content_type] ?? "KARYA"}</span>
+
+                    <h3 style={{ fontFamily: "var(--fd)", fontSize: 18, fontWeight: 600, lineHeight: 1.3, color: "var(--ink)", margin: "0 0 6px", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                      {w.title}
+                    </h3>
+
+                    {w.excerpt && (
+                      <p style={{ color: "var(--ink2)", fontSize: 13.5, margin: "0 0 12px", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                        {w.excerpt}
+                      </p>
+                    )}
+
+                    <Link href={`/penulis/${w.profiles?.username ?? ""}`} style={{ display: "flex", alignItems: "center", gap: 9, textDecoration: "none", paddingTop: 10, borderTop: "1px solid var(--rule)" }}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={w.profiles?.avatar_url || "https://picsum.photos/seed/mb-anon/100/100.jpg"} alt=""
+                        loading="lazy"
+                        style={{ width: 30, height: 30, borderRadius: "50%", objectFit: "cover", flexShrink: 0, border: "1.5px solid var(--rule2)" }} />
+                      <span style={{ minWidth: 0 }}>
+                        <b style={{ fontFamily: "var(--fd)", fontSize: 13.5, color: "var(--ink)", display: "block", lineHeight: 1.2 }}>
+                          {w.profiles?.full_name ?? "Penulis"}
+                        </b>
+                        <span style={{ fontFamily: "var(--fm)", fontSize: 10, color: "var(--mut)" }}>@{w.profiles?.username ?? "penulis"}</span>
+                      </span>
+                      <span style={{ marginLeft: "auto", fontFamily: "var(--fm)", fontSize: 10, color: "var(--mut)", whiteSpace: "nowrap" }}>
+                        {w.reading_time} mnt
+                      </span>
+                    </Link>
+                  </div>
+                </Link>
+              </div>
             ))}
           </div>
+
+          {sisanya.length > 12 && <MuatLagi total={sisanya.length} tampil={12} />}
         </section>
       )}
 

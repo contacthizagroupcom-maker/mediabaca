@@ -22,6 +22,7 @@ export default function TinjauKarya() {
   const [sibuk, setSibuk] = useState(false);
   const [galat, setGalat] = useState("");
   const [babs, setBabs] = useState<{ chapter_number: number; title: string; content: string }[]>([]);
+  const [unggulan, setUnggulan] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -29,9 +30,10 @@ export default function TinjauKarya() {
       if (!user) { router.push("/masuk"); return; }
       const { data } = await supabase
         .from("works")
-        .select("id, title, slug, excerpt, content, status, author_id, profiles(full_name, username)")
+        .select("id, title, slug, excerpt, content, status, author_id, featured, profiles(full_name, username)")
         .eq("id", params.id).maybeSingle();
       setKarya(data ?? null);
+      setUnggulan(!!(data as any)?.featured);
       if (data) {
         const { data: chs } = await supabase
           .from("chapters").select("chapter_number, title, content")
@@ -41,6 +43,14 @@ export default function TinjauKarya() {
       setMemuat(false);
     })();
   }, [params.id, router, supabase]);
+
+  async function toggleUnggulan() {
+    if (!karya) return;
+    setSibuk(true);
+    await supabase.from("works").update({ featured: !unggulan }).eq("id", karya.id);
+    setUnggulan(!unggulan);
+    setSibuk(false);
+  }
 
   async function putuskan(aksi: "PUBLISHED" | "REVISION_REQUIRED" | "REJECTED") {
     if (!karya || !catatan.trim()) { setGalat("Catatan wajib diisi sebelum mengambil keputusan."); return; }
@@ -120,6 +130,9 @@ export default function TinjauKarya() {
 
         <div style={{ display: "flex", gap: 10, marginTop: 16, flexWrap: "wrap" }}>
           <button onClick={() => putuskan("PUBLISHED")} disabled={sibuk} className="btn btn-acc">✅ Setujui & Terbitkan</button>
+          <button onClick={toggleUnggulan} disabled={sibuk} className={`btn ${unggulan ? "btn-acc" : ""}`} style={{ borderColor: unggulan ? undefined : "var(--acc)", color: unggulan ? undefined : "var(--acc)" }}>
+            {unggulan ? "★ Pilihan Editor (aktif)" : "☆ Jadikan Pilihan Editor"}
+          </button>
           <button onClick={() => putuskan("REVISION_REQUIRED")} disabled={sibuk} className="btn" style={{ borderColor: "var(--warn)", color: "var(--warn)" }}>↺ Minta Revisi</button>
           <button onClick={() => putuskan("REJECTED")} disabled={sibuk} className="btn" style={{ borderColor: "var(--err)", color: "var(--err)" }}>✕ Tolak</button>
         </div>
