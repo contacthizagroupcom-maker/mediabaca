@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 
-export function Masthead({ tanggal, edisi }: { tanggal: string; edisi: string }) {
+export function Masthead({ tanggal }: { tanggal: string }) {
   return (
     <div className="mb-muncul" style={{ background: "var(--paper)", borderBottom: "1px solid var(--ink)" }}>
       <div className="container-mb" style={{ padding: "18px 24px 14px", textAlign: "center" }}>
+
         <div style={{
           display: "flex", justifyContent: "space-between", alignItems: "center",
           fontFamily: "var(--fm)", fontSize: 10.5, letterSpacing: ".1em",
@@ -13,7 +14,7 @@ export function Masthead({ tanggal, edisi }: { tanggal: string; edisi: string })
         }}>
           <span>{tanggal}</span>
           <span className="mb-denot" style={{ color: "var(--acc)", fontSize: 13 }}>✦</span>
-          <span>{edisi}</span>
+          <span aria-hidden="true">{tanggal}</span>
         </div>
 
         <Link href="/" style={{ textDecoration: "none", display: "inline-block" }}>
