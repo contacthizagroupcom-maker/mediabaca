@@ -68,6 +68,10 @@ export default async function ProfilPenulis({ params }: { params: Promise<{ user
     .order("published_at", { ascending: false });
 
   const semua = karya ?? [];
+  const { count: lebihAwal } = await supabase
+    .from("profiles").select("id", { count: "exact", head: true })
+    .lt("joined_at", penulis.joined_at ?? new Date().toISOString());
+  const adalahPerdana = (lebihAwal ?? 0) < 30;
   const { count: pengikut } = await supabase
     .from("follows").select("id", { count: "exact", head: true })
     .eq("following_id", penulis.id);
@@ -94,7 +98,17 @@ export default async function ProfilPenulis({ params }: { params: Promise<{ user
             <img src={penulis.avatar_url || AVATAR_FALLBACK} alt={penulis.full_name}
               style={{ width: 92, height: 92, borderRadius: "50%", objectFit: "cover", border: "4px solid var(--paper)", background: "var(--paper)" }} />
             <div style={{ paddingBottom: 4 }}>
-              <h1 style={{ fontSize: 30, lineHeight: 1.1 }}>{penulis.full_name}</h1>
+              <h1 style={{ fontSize: 30, lineHeight: 1.1 }}>
+                {penulis.full_name}
+                {adalahPerdana && (
+                  <span title="Salah satu dari 30 penulis pertama MediaBaca" style={{
+                    display: "inline-flex", alignItems: "center", gap: 4, verticalAlign: "middle",
+                    fontFamily: "var(--fm)", fontSize: 9.5, letterSpacing: ".1em",
+                    background: "var(--ink)", color: "#4CC97B",
+                    padding: "4px 9px", borderRadius: 3, marginLeft: 10,
+                  }}>✦ PERDANA</span>
+                )}
+              </h1>
               <p className="meta" style={{ color: "var(--acc)", margin: "5px 0 0" }}>
                 {penulis.focus || "Penulis MediaBaca"} · @{penulis.username}
               </p>

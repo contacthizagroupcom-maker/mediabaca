@@ -33,6 +33,15 @@ export default async function Home() {
   const sisanya = works.slice(1);
   const populer = [...works].sort((a: any, b: any) => (b.views_count ?? 0) - (a.views_count ?? 0)).slice(0, 5);
   const unggulan = (works as any[]).filter(w => w.featured).slice(0, 3);
+  const petaPenulis = new Map<string, { nama: string; username: string; avatar: string; views: number; jumlah: number }>();
+  (works as any[]).forEach(w => {
+    const u = w.profiles?.username;
+    if (!u) return;
+    const cur = petaPenulis.get(u) ?? { nama: w.profiles.full_name ?? "Penulis", username: u, avatar: w.profiles.avatar_url ?? "", views: 0, jumlah: 0 };
+    cur.views += (w.views_count ?? 0); cur.jumlah += 1;
+    petaPenulis.set(u, cur);
+  });
+  const penulisMinggu = [...petaPenulis.values()].sort((a, b) => b.views - a.views)[0] ?? null;
   const totalViews = works.reduce((s: number, w: any) => s + (w.views_count ?? 0), 0);
 
   const PILAR = [
@@ -235,6 +244,31 @@ export default async function Home() {
               </Link>
             ))}
           </div>
+        </section>
+      )}
+
+      {/* ===== PENULIS MINGGU INI ===== */}
+      {penulisMinggu && penulisMinggu.views > 0 && (
+        <section className="container-mb" style={{ padding: "34px 24px 10px" }}>
+          <div className="kicker"><span className="idx">👤</span> PENULIS MINGGU INI <span className="krule"></span></div>
+          <Link href={`/penulis/${penulisMinggu.username}`} className="mb-kartu"
+            style={{ display: "flex", gap: 18, alignItems: "center", textDecoration: "none", border: "1px solid var(--rule)", borderRadius: 10, padding: "20px 22px", background: "var(--ink)", color: "var(--paper)", flexWrap: "wrap", marginTop: 18 }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={penulisMinggu.avatar || "https://picsum.photos/seed/mb-anon/200/200.jpg"} alt={penulisMinggu.nama}
+              style={{ width: 76, height: 76, borderRadius: "50%", objectFit: "cover", border: "3px solid #4CC97B" }} />
+            <span style={{ flex: 1, minWidth: 200 }}>
+              <span style={{ fontFamily: "var(--fm)", fontSize: 9.5, letterSpacing: ".14em", color: "#4CC97B", textTransform: "uppercase", display: "block", marginBottom: 4 }}>
+                ✦ Paling banyak dibaca pekan ini
+              </span>
+              <b style={{ fontFamily: "var(--fd)", fontSize: 24, display: "block", lineHeight: 1.2 }}>{penulisMinggu.nama}</b>
+              <span style={{ fontFamily: "var(--fm)", fontSize: 11, color: "rgba(255,255,255,.6)" }}>
+                @{penulisMinggu.username} · {penulisMinggu.jumlah} karya · {penulisMinggu.views.toLocaleString("id-ID")} kali dibaca
+              </span>
+            </span>
+            <span className="btn" style={{ padding: "11px 18px", color: "#fff", borderColor: "rgba(255,255,255,.4)" }}>
+              Lihat Profil →
+            </span>
+          </Link>
         </section>
       )}
 

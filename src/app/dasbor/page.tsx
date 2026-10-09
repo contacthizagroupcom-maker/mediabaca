@@ -14,6 +14,12 @@ export default function Dasbor() {
   const [stat, setStat] = useState({ total: 0, draft: 0, terbit: 0, review: 0 });
   const [memuat, setMemuat] = useState(true);
 
+  const [baru, setBaru] = useState(false);
+
+  useEffect(() => {
+    try { setBaru(!localStorage.getItem("mb-sambutan")); } catch {}
+  }, []);
+
   useEffect(() => {
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -64,6 +70,21 @@ export default function Dasbor() {
         <h1 style={{ fontSize: "clamp(1.8rem, 4vw, 2.6rem)", margin: "8px 0 6px" }}>
           Halo, {profil?.full_name ?? "Penulis"} 👋
         </h1>
+          {baru && (
+            <div style={{ border: "1px solid var(--acc)", background: "var(--paper2)", borderRadius: 8, padding: "20px 22px", marginBottom: 18 }}>
+              <div className="kicker" style={{ marginBottom: 10 }}><span className="idx">✦</span> SELAMAT DATANG DI MEDIABACA <span className="krule"></span></div>
+              <p style={{ margin: "0 0 6px", fontSize: 15.5, color: "var(--ink2)" }}>
+                Tiga langkah pertamamu:
+              </p>
+              <ol style={{ margin: "0 0 14px 18px", color: "var(--ink2)", fontSize: 14.5, lineHeight: 1.9 }}>
+                <li><b>Lengkapi profil</b> — foto, bio, fokus penulisan <Link href="/dasbor/profil" style={{ color: "var(--acc)" }}>di sini →</Link></li>
+                <li><b>Tulis karya pertama</b> — dari HP pun nyaman <Link href="/dasbor/tulis" style={{ color: "var(--acc)" }}>mulai menulis →</Link></li>
+                <li><b>Kirim untuk review</b> — editor kami akan membalas dengan catatan</li>
+              </ol>
+              <button onClick={() => { setBaru(false); try { localStorage.setItem("mb-sambutan", "1"); } catch {} }}
+                className="btn btn-acc" style={{ padding: "9px 16px" }}>✓ Mengerti, Mulai!</button>
+            </div>
+          )}
         <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap", marginBottom: 8 }}>
           <span className="meta">@{profil?.username}</span>
           <BadgePeran peran={peran} />
