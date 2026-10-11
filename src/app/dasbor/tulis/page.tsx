@@ -7,6 +7,7 @@ import { getSupabaseBrowserClient } from "@/lib/supabase";
 import { HeaderDalam } from "@/components/AppShell";
 import { UploadSampul } from "@/components/UploadSampul";
 import { EditorTeks } from "@/components/EditorTeks";
+import { StandarRubrik } from "@/components/StandarRubrik";
 
 
 const RUBRIK_JENIS: Record<string, string> = {
@@ -225,6 +226,8 @@ function IsiTulis() {
               ))}
             </select>
           </div>
+
+          {kategori && <StandarRubrik kategoriId={kategori} />}
 
           {kategori.startsWith("rb-kajian") && (
             <>

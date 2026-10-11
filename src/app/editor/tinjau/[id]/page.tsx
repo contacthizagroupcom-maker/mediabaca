@@ -5,10 +5,11 @@ import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { getSupabaseBrowserClient } from "@/lib/supabase";
 import { HeaderDalam } from "@/components/AppShell";
+import { StandarRubrik } from "@/components/StandarRubrik";
 
 type Karya = {
   id: string; title: string; slug: string; excerpt: string; content: string;
-  status: string; author_id: string;
+  status: string; author_id: string; category_id: string;
   profiles: { full_name: string; username: string } | null;
 };
 
@@ -18,11 +19,11 @@ export default function TinjauKarya() {
   const supabase = getSupabaseBrowserClient();
   const [karya, setKarya] = useState<Karya | null>(null);
   const [catatan, setCatatan] = useState("");
+  const [babs, setBabs] = useState<{ chapter_number: number; title: string; content: string }[]>([]);
+  const [unggulan, setUnggulan] = useState(false);
   const [memuat, setMemuat] = useState(true);
   const [sibuk, setSibuk] = useState(false);
   const [galat, setGalat] = useState("");
-  const [babs, setBabs] = useState<{ chapter_number: number; title: string; content: string }[]>([]);
-  const [unggulan, setUnggulan] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -30,7 +31,7 @@ export default function TinjauKarya() {
       if (!user) { router.push("/masuk"); return; }
       const { data } = await supabase
         .from("works")
-        .select("id, title, slug, excerpt, content, status, author_id, featured, profiles(full_name, username)")
+        .select("id, title, slug, excerpt, content, status, author_id, category_id, featured, profiles(full_name, username)")
         .eq("id", params.id).maybeSingle();
       setKarya(data ?? null);
       setUnggulan(!!(data as any)?.featured);
@@ -106,7 +107,7 @@ export default function TinjauKarya() {
 
         {babs.length > 0 && (
           <div style={{ marginTop: 32 }}>
-            <div className="kicker"><span className="idx">Ch</span> {babs.length} BAB — RINGKASAN TIAP BAB <span className="krule"></span></div>
+            <div className="kicker"><span className="idx">Ch</span> {babs.length} BAB — BUKA UNTUK MEMBACA <span className="krule"></span></div>
             {babs.map(b => (
               <details key={b.chapter_number} style={{ border: "1px solid var(--rule2)", borderRadius: 4, marginTop: 10, background: "var(--paper2)" }}>
                 <summary style={{ padding: "12px 16px", cursor: "pointer", fontFamily: "var(--fd)", fontWeight: 600 }}>
@@ -117,9 +118,13 @@ export default function TinjauKarya() {
             ))}
           </div>
         )}
+
         <div style={{ borderTop: "1px solid var(--ink)", margin: "32px 0 24px" }} />
 
         <div className="kicker" style={{ marginBottom: 14 }}><span className="idx">!</span> KEPUTUSAN EDITORIAL <span className="krule"></span></div>
+
+        {karya.category_id && <StandarRubrik kategoriId={karya.category_id} />}
+
         {galat && <p style={{ color: "var(--err)", border: "1px solid var(--err)", padding: 12, borderRadius: 4, marginBottom: 14 }}>{galat}</p>}
 
         <div className="field">
@@ -130,7 +135,7 @@ export default function TinjauKarya() {
 
         <div style={{ display: "flex", gap: 10, marginTop: 16, flexWrap: "wrap" }}>
           <button onClick={() => putuskan("PUBLISHED")} disabled={sibuk} className="btn btn-acc">✅ Setujui & Terbitkan</button>
-          <button onClick={toggleUnggulan} disabled={sibuk} className={`btn ${unggulan ? "btn-acc" : ""}`} style={{ borderColor: unggulan ? undefined : "var(--acc)", color: unggulan ? undefined : "var(--acc)" }}>
+          <button onClick={toggleUnggulan} disabled={sibuk} className={`btn ${unggulan ? "btn-acc" : ""}`} style={unggulan ? undefined : { borderColor: "var(--acc)", color: "var(--acc)" }}>
             {unggulan ? "★ Pilihan Editor (aktif)" : "☆ Jadikan Pilihan Editor"}
           </button>
           <button onClick={() => putuskan("REVISION_REQUIRED")} disabled={sibuk} className="btn" style={{ borderColor: "var(--warn)", color: "var(--warn)" }}>↺ Minta Revisi</button>
