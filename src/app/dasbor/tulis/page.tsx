@@ -54,7 +54,7 @@ function IsiTulis() {
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { router.push("/masuk"); return; }
-      const { data } = await supabase.from("categories").select("id, name, parent_id");
+      const { data } = await supabase.from("categories").select("id, name, parent_id").not("description", "ilike", "%[ARSIP]%");
       setDaftarKategori(data ?? []);
 
       if (editId) {

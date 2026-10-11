@@ -14,7 +14,7 @@ async function ambilSemua() {
   );
   const { data } = await supabase
     .from("works")
-    .select("id, title, slug, excerpt, cover_url, featured, published_at, reading_time, views_count, content_type, profiles(full_name, username, avatar_url)")
+    .select("id, title, slug, excerpt, cover_url, featured, published_at, reading_time, views_count, content_type, category_id, categories(name), profiles(full_name, username, avatar_url)")
     .eq("status", "PUBLISHED")
     .order("published_at", { ascending: false });
   return data ?? [];
@@ -45,11 +45,12 @@ export default async function Home() {
   const totalViews = works.reduce((s: number, w: any) => s + (w.views_count ?? 0), 0);
 
   const PILAR = [
-    { jenis: "ACADEMIC", label: "Akademik", desc: "Makalah, kajian, penelitian" },
-    { jenis: "FICTION", label: "Fiksi", desc: "Cerpen, novel, puisi" },
-    { jenis: "NONFICTION", label: "Esai & Nonfiksi", desc: "Refleksi, memoar, perjalanan" },
-    { jenis: "OPINION", label: "Opini", desc: "Filsafat, sosial, teknologi" },
-    { jenis: "JOURNALISM", label: "Jurnalistik", desc: "Feature, reportase" },
+    { href: "/jelajahi?kategori=rb-renungan", label: "Tafakur", desc: "Refleksi spiritual yang hangat" },
+    { href: "/jelajahi?kategori=rb-sudut", label: "Lensa", desc: "Kritik & gagasan tajam" },
+    { href: "/jelajahi?kategori=rb-kajian", label: "Kajian", desc: "Akademik yang hidup" },
+    { href: "/jelajahi?kategori=rb-kreasi", label: "Cipta", desc: "Fiksi & puisi" },
+    { href: "/jelajahi?kategori=rb-jejak", label: "Jejak", desc: "Reportase & perjalanan" },
+    { href: "/jelajahi?kategori=rb-generasi", label: "Akar Rumput", desc: "Pendidikan & kepemimpinan dari bawah" },
   ];
 
   return (
@@ -64,10 +65,12 @@ export default async function Home() {
           {[
             { label: "TERBARU", href: "/jelajahi", id: "terbaru" },
             { label: "TERPOPULER", href: "/jelajahi?urut=populer", id: "populer" },
-            { label: "AKADEMIK", href: "/jelajahi?jenis=ACADEMIC", id: "ACADEMIC" },
-            { label: "FIKSI", href: "/jelajahi?jenis=FICTION", id: "FICTION" },
-            { label: "ESAI", href: "/jelajahi?jenis=NONFICTION", id: "NONFICTION" },
-            { label: "OPINI", href: "/jelajahi?jenis=OPINION", id: "OPINION" },
+            { label: "TAFAKUR", href: "/jelajahi?kategori=rb-renungan", id: "renungan" },
+            { label: "LENSA", href: "/jelajahi?kategori=rb-sudut", id: "sudut" },
+            { label: "KAJIAN", href: "/jelajahi?kategori=rb-kajian", id: "kajian" },
+            { label: "CIPTA", href: "/jelajahi?kategori=rb-kreasi", id: "kreasi" },
+            { label: "JEJAK", href: "/jelajahi?kategori=rb-jejak", id: "jejak" },
+            { label: "AKAR RUMPUT", href: "/jelajahi?kategori=rb-generasi", id: "generasi" },
           ].map(t => (
             <Link key={t.id} href={t.href}
               style={{
@@ -189,7 +192,7 @@ export default async function Home() {
                       display: "inline-block", fontSize: 9, letterSpacing: ".1em", textTransform: "uppercase",
                       fontFamily: "var(--fm)", color: "var(--acc)", border: "1px solid var(--acc)",
                       borderRadius: 3, padding: "2px 7px", marginBottom: 8,
-                    }}>{JENIS_LABEL[w.content_type] ?? "KARYA"}</span>
+                    }}>{(w.categories as any)?.name?.toUpperCase() ?? JENIS_LABEL[w.content_type] ?? "KARYA"}</span>
 
                     <h3 style={{ fontFamily: "var(--fd)", fontSize: 18, fontWeight: 600, lineHeight: 1.3, color: "var(--ink)", margin: "0 0 6px", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
                       {w.title}
@@ -277,7 +280,7 @@ export default async function Home() {
         <div className="kicker"><span className="idx">03</span> JELAJAHI PILAR <span className="krule"></span></div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 12, marginTop: 16 }}>
           {PILAR.map(p => (
-            <Link key={p.jenis} href={`/jelajahi?jenis=${p.jenis}`} className="mb-kartu" style={{
+            <Link key={p.label} href={p.href} className="mb-kartu" style={{
               border: "1px solid var(--rule)", borderRadius: 8, padding: "16px 14px",
               textDecoration: "none", background: "var(--paper2)",
             }}>

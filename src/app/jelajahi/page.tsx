@@ -23,8 +23,7 @@ export default async function Jelajahi({ searchParams }: { searchParams: Promise
     { cookies: { getAll: () => [], setAll: () => {} } }
   );
 
-  const { data: kategoriList } = await supabase
-    .from("categories").select("id, name, slug, parent_id").order("name");
+  const { data: kategoriList } = await supabase.from("categories").select("id, name, slug, parent_id").not("description", "ilike", "%[ARSIP]%").order("name");
 
   let q = supabase
     .from("works")
