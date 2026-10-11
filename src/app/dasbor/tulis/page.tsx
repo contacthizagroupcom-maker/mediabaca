@@ -8,6 +8,12 @@ import { HeaderDalam } from "@/components/AppShell";
 import { UploadSampul } from "@/components/UploadSampul";
 import { EditorTeks } from "@/components/EditorTeks";
 
+
+const RUBRIK_JENIS: Record<string, string> = {
+  "rb-renungan": "NONFICTION", "rb-sudut": "OPINION", "rb-kajian": "ACADEMIC",
+  "rb-kreasi": "FICTION", "rb-jejak": "JOURNALISM", "rb-generasi": "OPINION",
+};
+
 const JENIS = [
   { id: "NONFICTION", label: "Nonfiksi" },
   { id: "FICTION", label: "Fiksi" },
@@ -89,7 +95,7 @@ function IsiTulis() {
     if (!judul.trim()) { setGalat("Judul wajib diisi."); return; }
     if (kirim && !kategori) { setGalat("Pilih kategori."); return; }
     if (kirim && jumlahKata < 20) { setGalat("Isi masih terlalu pendek."); return; }
-    if (kirim && jenis === "ACADEMIC" && (!abstrak.trim() || !kataKunci.trim())) {
+    if (kirim && kategori.startsWith("rb-kajian") && (!abstrak.trim() || !kataKunci.trim())) {
       setGalat("Karya akademik wajib abstrak + kata kunci."); return;
     }
     setProses(true);
@@ -101,7 +107,7 @@ function IsiTulis() {
       excerpt: ringkasan.trim() || isi.replace(/<[^>]+>/g, " ").trim().slice(0, 180),
       content: isi,
       cover_url: sampul.trim(),
-      content_type: jenis,
+      content_type: (kategori.startsWith("rb-") ? RUBRIK_JENIS[kategori.split("-").slice(0, 2).join("-")] ?? jenis : jenis),
       category_id: kategori || null,
       reading_time: Math.max(1, Math.round(jumlahKata / 200)),
       ...(editId ? {} : { author_id: user.id, status: "DRAFT" as const }),
@@ -120,7 +126,7 @@ function IsiTulis() {
         slug = slugify(judul) + "-" + n; n++;
       }
       const { data: baru, error } = await supabase
-        .from("works").insert({ ...dataKarya, slug, fiction_format: jenis === "FICTION" ? "short" : null })
+        .from("works").insert({ ...dataKarya, slug, fiction_format: kategori.startsWith("rb-kreasi") ? "short" : null })
         .select("id").single();
       if (error || !baru) { setGalat("Gagal menyimpan: " + error.message); setProses(false); return; }
       idKarya = baru.id;
@@ -138,7 +144,7 @@ function IsiTulis() {
       }
     }
 
-    if (jenis === "FICTION" && babs.length > 0) {
+    if (kategori.startsWith("rb-kreasi") && babs.length > 0) {
       await supabase.from("chapters").delete().eq("work_id", idKarya);
       for (let i = 0; i < babs.length; i++) {
         const b = babs[i];
@@ -205,22 +211,11 @@ function IsiTulis() {
         <p className="meta" style={{ margin: "8px 0 20px" }}>/karya/{slugify(judul) || "otomatis-dari-judul"}</p>
 
         <div style={{ display: "grid", gap: 16 }}>
-          <div className="field">
-            <label>Jenis Karya</label>
-            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-              {JENIS.map(j => (
-                <button key={j.id} type="button" onClick={() => setJenis(j.id)}
-                  className={`btn ${jenis === j.id ? "btn-primary" : ""}`} style={{ padding: "9px 14px", fontSize: 10 }}>
-                  {j.label}
-                </button>
-              ))}
-            </div>
-          </div>
 
           <div className="field">
-            <label htmlFor="kategori">Kategori</label>
+            <label htmlFor="kategori">Rubrik Karya</label>
             <select id="kategori" className="input" value={kategori} onChange={e => setKategori(e.target.value)}>
-              <option value="">— pilih kategori —</option>
+              <option value="">— pilih rubrik —</option>
               {induk.map(p => (
                 <optgroup key={p.id} label={p.name}>
                   {daftarKategori.filter(k => k.parent_id === p.id).map(k => (
@@ -231,7 +226,7 @@ function IsiTulis() {
             </select>
           </div>
 
-          {jenis === "ACADEMIC" && (
+          {kategori.startsWith("rb-kajian") && (
             <>
               <div className="field">
                 <label htmlFor="abstrak">Abstrak</label>

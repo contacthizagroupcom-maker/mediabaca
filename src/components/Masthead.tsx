@@ -34,11 +34,17 @@ export function Masthead({ tanggal }: { tanggal: string }) {
           borderBottom: "1px solid var(--rule)",
           display: "flex", justifyContent: "center", gap: 10, flexWrap: "wrap",
         }}>
-          <span>Membaca</span>
+          <span>Tafakur</span>
           <span style={{ color: "var(--acc)" }}>•</span>
-          <span>Menulis</span>
+          <span>Lensa</span>
           <span style={{ color: "var(--acc)" }}>•</span>
-          <span>Berbagi Gagasan</span>
+          <span>Kajian</span>
+          <span style={{ color: "var(--acc)" }}>•</span>
+          <span>Cipta</span>
+          <span style={{ color: "var(--acc)" }}>•</span>
+          <span>Jejak</span>
+          <span style={{ color: "var(--acc)" }}>•</span>
+          <span>Akar Rumput</span>
         </div>
       </div>
     </div>

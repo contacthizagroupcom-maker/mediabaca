@@ -8,8 +8,8 @@ const newsreader = Newsreader({ subsets: ["latin"], variable: "--font-fb" });
 const plexmono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400", "500"], variable: "--font-fm" });
 
 export const metadata: Metadata = {
-  title: "MediaBaca — Ruang untuk Membaca, Menulis, dan Berbagi Gagasan.",
-  description: "Jurnal digital multi-penulis untuk karya akademik, fiksi, nonfiksi, opini, dan jurnalistik.",
+  title: "MediaBaca — Jurnal Digital Kaum Cendekia Organik",
+  description: "Rumah gagasan kaum cendekia organik: esai, kajian, fiksi, puisi, dan catatan perjuangan dalam enam rubrik — Tafakur, Lensa, Kajian, Cipta, Jejak, Akar Rumput.",
   verification: { google: "gzYq32MDXvFEXkiys7IhtInbzr92nD8ziZiejnptwbo" },
 };
 
